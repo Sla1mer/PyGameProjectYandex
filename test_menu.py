@@ -1,5 +1,3 @@
-from win32api import GetMonitorInfo, MonitorFromPoint
-
 from animation_test import open_chest
 from load_img import load_image
 from test_gameplay import play
@@ -29,6 +27,7 @@ mainClock = pygame.time.Clock()
 pygame.init()
 pygame.display.set_caption('Крутая карточная игра')
 if platform.system() == 'Windows':  # Windows
+    from win32api import GetMonitorInfo, MonitorFromPoint
     monitor_info = GetMonitorInfo(MonitorFromPoint((0, 0)))
     monitor_area = monitor_info.get("Monitor")
     work_area = monitor_info.get("Work")
