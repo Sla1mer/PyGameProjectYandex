@@ -4,12 +4,12 @@ import os, platform
 import random
 import sys
 
+from Settings import get_screen_mode
 import pyautogui
 import pygame
 
 # Изображение не получится загрузить
 # без предварительной инициализации pygame
-from Game_menu.Settings import get_screen_mode
 
 width, height = pyautogui.size()
 # Инициализация игрового поля
@@ -19,6 +19,7 @@ pygame.init()
 pygame.display.set_caption('Крутая карточная игра')
 
 if platform.system() == 'Windows':  # Windows
+    from win32api import GetMonitorInfo, MonitorFromPoint
     monitor_info = GetMonitorInfo(MonitorFromPoint((0, 0)))
     monitor_area = monitor_info.get("Monitor")
     work_area = monitor_info.get("Work")
@@ -35,10 +36,18 @@ else:
 
 parts_dict = {0: 'Твоя линия осадных карт', 1: 'Твоя линия дальников', 2: 'Твоя линия ближников',
               3: 'Линия противника ближников', 4: 'Линия противника дальников', 5: 'Линия противника осадных карт'}
-card_line_pos = {0: (665, 506), 1: (665, 406), 2: (665, 306), 3: (665, 200), 4: (665, 100), 5: (665, 0)}
-cards_ids = {1000: ('mechnik.png', 1)}
+cards_ids = {1000: ('swoarder1.png', 1)}
 
-parts_coord = {0: (342, 506), 1: (342, 406), 2: (342, 306), 3: (342, 200), 4: (342, 100), 5: (342, 0)}
+x_for_parts_coords, y_for_parts_coords = int(screen_size[0] / 3), screen_size[1] // 9
+parts_coord = {0: (x_for_parts_coords, y_for_parts_coords), 1: (x_for_parts_coords, y_for_parts_coords * 2),
+               2: (x_for_parts_coords, y_for_parts_coords * 3), 3: (x_for_parts_coords, y_for_parts_coords * 4),
+               4: (x_for_parts_coords, y_for_parts_coords * 5), 5: (x_for_parts_coords, y_for_parts_coords * 6)}
+board_lines_path_data = {0: ("board//line_siege.png", "board//line_siege_selected.png"),
+                         1: ("board//line_distant.png", "board//line_distant_selected.png"),
+                         2: ("board//line_swords.png", "board//line_swords_selected.png"),
+                         5: ("board//line_siege.png", "board//line_siege_selected.png"),
+                         4: ("board//line_distant.png", "board//line_distant_selected.png"),
+                         3: ("board//line_swords.png", "board//line_swords_selected.png")}
 
 
 def load_image(name, colorkey=None):
@@ -176,13 +185,14 @@ class Card(pygame.sprite.Sprite):
 
 
 class Table(pygame.sprite.Sprite):
-    image = load_image("table_2.png")
+    image = load_image("board//background.png")
 
     def __init__(self, group):
         # НЕОБХОДИМО вызвать конструктор родительского класса Sprite.
         # Это очень важно !!!
         super().__init__(group)
         self.image = Table.image
+        self.image = pygame.transform.scale(self.image, screen_size)
         self.rect = self.image.get_rect()
 
 
@@ -256,14 +266,14 @@ class MyPartCards(pygame.sprite.Sprite):
 
 
 class Parts(pygame.sprite.Sprite):
-    image_default = load_image("part.png")
-    image_selected = load_image("part_choosen.png")
-
     def __init__(self, group, part_type):
         # НЕОБХОДИМО вызвать конструктор родительского класса Sprite.
         # Это очень важно !!!
         super().__init__(group)
-        self.image = Parts.image_default
+        self.image_default = load_image(board_lines_path_data[part_type][0])
+        self.image_selected = load_image(board_lines_path_data[part_type][1])
+        self.image = self.image_default
+        self.image = pygame.transform.scale(self.image, (screen_size[0] // 2, screen_size[1] // 9))
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = parts_coord[part_type]
         self.part_type = part_type
@@ -283,9 +293,11 @@ class Parts(pygame.sprite.Sprite):
             if self.rect.collidepoint(args[0]):
                 if self.image != self.image_selected:
                     self.image = self.image_selected
+                    self.image = pygame.transform.scale(self.image, (screen_size[0] // 2, screen_size[1] // 9))
             else:
                 if self.image != self.image_default:
                     self.image = self.image_default
+                    self.image = pygame.transform.scale(self.image, (screen_size[0] // 2, screen_size[1] // 9))
 
 
 class BallsCounters(pygame.sprite.Sprite):
