@@ -36,18 +36,18 @@ else:
 
 parts_dict = {0: 'Твоя линия осадных карт', 1: 'Твоя линия дальников', 2: 'Твоя линия ближников',
               3: 'Линия противника ближников', 4: 'Линия противника дальников', 5: 'Линия противника осадных карт'}
-cards_ids = {1000: ('mechnik.png', 1)}
+cards_ids = {1000: ('swoarder1.png', 1)}
 
 x_for_parts_coords, y_for_parts_coords = int(screen_size[0] / 3), screen_size[1] // 9
 parts_coord = {0: (x_for_parts_coords, y_for_parts_coords), 1: (x_for_parts_coords, y_for_parts_coords * 2),
                2: (x_for_parts_coords, y_for_parts_coords * 3), 3: (x_for_parts_coords, y_for_parts_coords * 4),
                4: (x_for_parts_coords, y_for_parts_coords * 5), 5: (x_for_parts_coords, y_for_parts_coords * 6)}
-board_lines_path_data = {0: ("board\\line_siege.png", "board\\line_siege_selected.png"),
-                         1: ("board\\line_distant.png", "board\\line_distant_selected.png"),
-                         2: ("board\\line_swords.png", "board\\line_swords_selected.png"),
-                         5: ("board\\line_siege.png", "board\\line_siege_selected.png"),
-                         4: ("board\\line_distant.png", "board\\line_distant_selected.png"),
-                         3: ("board\\line_swords.png", "board\\line_swords_selected.png")}
+board_lines_path_data = {0: ("board//line_siege.png", "board//line_siege_selected.png"),
+                         1: ("board//line_distant.png", "board//line_distant_selected.png"),
+                         2: ("board//line_swords.png", "board//line_swords_selected.png"),
+                         5: ("board//line_siege.png", "board//line_siege_selected.png"),
+                         4: ("board//line_distant.png", "board//line_distant_selected.png"),
+                         3: ("board//line_swords.png", "board//line_swords_selected.png")}
 
 
 def load_image(name, colorkey=None):
@@ -185,7 +185,7 @@ class Card(pygame.sprite.Sprite):
 
 
 class Table(pygame.sprite.Sprite):
-    image = load_image("board\\background.png")
+    image = load_image("board//background.png")
 
     def __init__(self, group):
         # НЕОБХОДИМО вызвать конструктор родительского класса Sprite.
