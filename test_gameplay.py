@@ -203,6 +203,27 @@ class Table(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
 
+class PlayersStats(pygame.sprite.Sprite):
+    image = load_image("board//player_stats.png")
+
+    def __init__(self, group, part_type):
+        # НЕОБХОДИМО вызвать конструктор родительского класса Sprite.
+        # Это очень важно !!!
+        super().__init__(group)
+        self.image = PlayersStats.image
+        self.image = pygame.transform.scale(self.image, (screen_size[0] // 5, screen_size[1] // 7))
+        self.rect = self.image.get_rect()
+        self.part_type = part_type
+        if part_type == 0:
+            self.rect.x, self.rect.y = (0, screen_size[1] // 8)
+        elif part_type == 1:
+            self.rect.x, self.rect.y = (0, screen_size[1] // 8 * 5)
+
+    def if_part_type(self, part_type):
+        if part_type == self.part_type:
+            return self
+
+
 class MyPartCards(pygame.sprite.Sprite):
     image_default = load_image("mypart.png")
 
@@ -331,14 +352,20 @@ class BallsCounters(pygame.sprite.Sprite):
             self.image = pygame.transform.scale(self.image, (part.rect.height // 2, part.rect.height // 2))
             self.rect = self.image.get_rect()
             self.rect.centerx, self.rect.centery = part.rect.topleft[0] - part.rect.topleft[0] // 27, part.rect.topleft[1] + part.rect.height // 2
-        elif part_type == 6:
-            self.image = BallsCounters.image_ball_blue
-            self.rect = self.image.get_rect()
-            self.rect.centerx, self.rect.centery = (225, 233)
         elif part_type == 7:
+            stats_part = list(filter(lambda x: x.if_part_type(0) is not None, [i for i in players_stats_sprites]))[0]
             self.image = BallsCounters.image_ball_yellow
+            self.image = pygame.transform.scale(self.image, (stats_part.rect.height // 2, stats_part.rect.height // 2))
             self.rect = self.image.get_rect()
-            self.rect.centerx, self.rect.centery = (225, 490)
+            self.rect.centerx, self.rect.centery = stats_part.rect.topright[0] - stats_part.rect.topright[0] // 27,\
+                                                   stats_part.rect.topright[1] + stats_part.rect.height // 2
+        elif part_type == 6:
+            stats_part = list(filter(lambda x: x.if_part_type(1) is not None, [i for i in players_stats_sprites]))[0]
+            self.image = BallsCounters.image_ball_blue
+            self.image = pygame.transform.scale(self.image, (stats_part.rect.height // 2, stats_part.rect.height // 2))
+            self.rect = self.image.get_rect()
+            self.rect.centerx, self.rect.centery = stats_part.rect.topright[0] - stats_part.rect.topright[0] // 27,\
+                                                   stats_part.rect.topright[1] + stats_part.rect.height // 2
         self.score = 0
 
     def if_part_type(self, part_type):
@@ -364,6 +391,7 @@ board = pygame.sprite.Group()
 my_part = pygame.sprite.Group()
 all_parts = pygame.sprite.Group()
 balls_stat = pygame.sprite.Group()
+players_stats_sprites = pygame.sprite.Group()
 
 
 def play(screen, screen_size):
@@ -378,6 +406,9 @@ def play(screen, screen_size):
     all_parts = pygame.sprite.Group()
     global balls_stat
     balls_stat = pygame.sprite.Group()
+    global players_stats_sprites
+    players_stats_sprites = pygame.sprite.Group()
+
     Card(cards_group, card_id=1000)
     Card(cards_group, card_id=1000)
     Card(cards_group, card_id=1000)
@@ -403,6 +434,9 @@ def play(screen, screen_size):
     Parts(all_parts, 4)
     Parts(all_parts, 5)
 
+    PlayersStats(players_stats_sprites, 0)
+    PlayersStats(players_stats_sprites, 1)
+
     BallsCounters(balls_stat, 0)
     BallsCounters(balls_stat, 1)
     BallsCounters(balls_stat, 2)
@@ -411,6 +445,7 @@ def play(screen, screen_size):
     BallsCounters(balls_stat, 5)
     BallsCounters(balls_stat, 6)
     BallsCounters(balls_stat, 7)
+
 
     running = True
     card_taked = False
@@ -429,6 +464,7 @@ def play(screen, screen_size):
         board.draw(screen)
         all_parts.draw(screen)
         my_part.draw(screen)
+        players_stats_sprites.draw(screen)
         balls_stat.draw(screen)
         for i in balls_stat:
             temp = i.draw_text()
