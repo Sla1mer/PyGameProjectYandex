@@ -37,16 +37,17 @@ else:
 parts_dict = {0: 'Твоя линия осадных карт', 1: 'Твоя линия дальников', 2: 'Твоя линия ближников',
               3: 'Линия противника ближников', 4: 'Линия противника дальников', 5: 'Линия противника осадных карт'}
 cards_ids = {1000: ('swoarder1.png', 'Мечник', 2, 3)}
-x_for_parts_coords, y_for_parts_coords = int(screen_size[0] / 3), screen_size[1] // 9
-parts_coord = {0: (x_for_parts_coords, y_for_parts_coords), 1: (x_for_parts_coords, y_for_parts_coords * 2),
-               2: (x_for_parts_coords, y_for_parts_coords * 3), 3: (x_for_parts_coords, y_for_parts_coords * 4),
-               4: (x_for_parts_coords, y_for_parts_coords * 5), 5: (x_for_parts_coords, y_for_parts_coords * 6)}
+x_for_parts_coords, y_for_parts_coords = int(screen_size[0] / 3.5), screen_size[1] // 10
+some_to_plus = int(screen_size[1] // 10 // 5)
+parts_coord = {0: (x_for_parts_coords, y_for_parts_coords), 1: (x_for_parts_coords, y_for_parts_coords * 2 + some_to_plus),
+               2: (x_for_parts_coords, y_for_parts_coords * 3 + some_to_plus * 2), 3: (x_for_parts_coords, y_for_parts_coords * 4 + some_to_plus * 3),
+               4: (x_for_parts_coords, y_for_parts_coords * 5 + some_to_plus * 4), 5: (x_for_parts_coords, y_for_parts_coords * 6 + some_to_plus * 5)}
 board_lines_path_data = {0: ("board//line_siege.png", "board//line_siege_selected.png"),
                          1: ("board//line_distant.png", "board//line_distant_selected.png"),
-                         2: ("board//line_swords.png", "board//line_swords_selected.png"),
+                         2: ("board//line_swords2.png", "board//line_swords_selected.png"),
                          5: ("board//line_siege.png", "board//line_siege_selected.png"),
                          4: ("board//line_distant.png", "board//line_distant_selected.png"),
-                         3: ("board//line_swords.png", "board//line_swords_selected.png")}
+                         3: ("board//line_swords2.png", "board//line_swords_selected.png")}
 
 
 def load_image(name, colorkey=None):
@@ -211,17 +212,41 @@ class PlayersStats(pygame.sprite.Sprite):
         # Это очень важно !!!
         super().__init__(group)
         self.image = PlayersStats.image
-        self.image = pygame.transform.scale(self.image, (screen_size[0] // 5, screen_size[1] // 7))
+        self.image = pygame.transform.scale(self.image, (screen_size[0] // 5, screen_size[1] // 5))
         self.rect = self.image.get_rect()
         self.part_type = part_type
         if part_type == 0:
-            self.rect.x, self.rect.y = (0, screen_size[1] // 8)
+            self.rect.x, self.rect.y = (0, screen_size[1] // 15)
         elif part_type == 1:
             self.rect.x, self.rect.y = (0, screen_size[1] // 8 * 5)
 
     def if_part_type(self, part_type):
         if part_type == self.part_type:
             return self
+
+    def draw_text(self):
+        count_my_cards = 0
+        if self.part_type == 0:
+            count_my_cards = 0  # кол-во карт врага
+        if self.part_type == 1:
+            count_my_cards = count_my_cards = [i.get_count_cards() for i in my_part][0]  # кол-во карт моих
+        font = pygame.font.Font('our_font.otf', 70)
+        text1 = font.render(str(count_my_cards), False,
+                            (247, 147, 30))
+        return text1, (self.rect.x + (self.rect.centerx - self.rect.x) // 4,
+                       self.rect.centery + (self.rect.centery - self.rect.y) // 10)
+
+    def draw_name(self):
+        name = ''
+        if self.part_type == 0:
+            name = 'Противник'  # кол-во карт врага
+        if self.part_type == 1:
+            name = 'Ты'  # кол-во карт моих
+        font = pygame.font.Font('our_font.otf', 50)
+        text1 = font.render(str(name), False,
+                            (247, 147, 30))
+        return text1, (self.rect.x + (self.rect.centerx - self.rect.x) // 4,
+                       self.rect.y + (self.rect.centery - self.rect.y) // 10)
 
 
 class MyPartCards(pygame.sprite.Sprite):
@@ -234,8 +259,11 @@ class MyPartCards(pygame.sprite.Sprite):
         self.image = MyPartCards.image_default
         self.image = pygame.transform.scale(self.image, (screen_size[0] // 2, screen_size[1] // 9))
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = (x_for_parts_coords, y_for_parts_coords * 7 + int(y_for_parts_coords * 0.5))
+        self.rect.x, self.rect.y = (x_for_parts_coords, y_for_parts_coords * 8 + int(y_for_parts_coords * 0.5))
         self.my_cards = []
+
+    def get_count_cards(self):
+        return len(self.my_cards)
 
     def remove_card(self, card):
         self.my_cards.remove(card)
@@ -373,10 +401,14 @@ class BallsCounters(pygame.sprite.Sprite):
             return self
 
     def draw_text(self):
-        font = pygame.font.Font('our_font.otf', 35)
+        font_size = 35
+        if self.part_type == 7 or self.part_type == 6:
+            font_size = 50
+        font = pygame.font.Font('our_font.otf', font_size)
         text1 = font.render(str(self.score), False,
                             (219, 0, 223))
-        return text1, (self.rect.centerx - (self.rect.centerx - self.rect.x) // 2.5, self.rect.y)
+        return text1, (self.rect.centerx - (self.rect.centerx - self.rect.x) // 2.5,
+                       self.rect.centery - (self.rect.centery - self.rect.y) // 1.5)
 
     # def update(self, *args):
     #     font = pygame.font.SysFont('Comic Sans MS', 30)
@@ -446,7 +478,6 @@ def play(screen, screen_size):
     BallsCounters(balls_stat, 6)
     BallsCounters(balls_stat, 7)
 
-
     running = True
     card_taked = False
     while running:
@@ -468,6 +499,11 @@ def play(screen, screen_size):
         balls_stat.draw(screen)
         for i in balls_stat:
             temp = i.draw_text()
+            screen.blit(temp[0], temp[1])
+        for i in players_stats_sprites:
+            temp = i.draw_text()
+            screen.blit(temp[0], temp[1])
+            temp = i.draw_name()
             screen.blit(temp[0], temp[1])
         cards_group.draw(screen)
         pygame.display.flip()
