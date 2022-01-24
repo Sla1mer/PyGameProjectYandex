@@ -192,6 +192,21 @@ class Card(pygame.sprite.Sprite):
         self.directional_movement()
 
 
+class Deck(pygame.sprite.Sprite):
+    image_blue_card = load_image('board//blue_card.png')
+    image_yellow_card = load_image('board//yellow_card.png')
+
+    def __init__(self, group, deck_type):
+        super().__init__(group)
+        self.image = Deck.image_blue_card if deck_type == 1 else Deck.image_yellow_card
+        self.image = pygame.transform.scale(self.image, (screen_size[0] // 2 // 12, screen_size[1] // 9))
+        # self.image = pygame.transform.scale(self.image, (70, 96))
+        self.deck_type = deck_type
+        self.rect = self.image.get_rect()
+        self.rect.centerx, self.rect.centery = (screen_size[0] // 2 // 12 * 23, screen_size[1] // 9 * 7) \
+            if deck_type == 1 else (screen_size[0] // 2 // 12 * 23, screen_size[1] // 9)
+
+
 class Table(pygame.sprite.Sprite):
     image = load_image("board//background.png")
 
@@ -424,6 +439,7 @@ my_part = pygame.sprite.Group()
 all_parts = pygame.sprite.Group()
 balls_stat = pygame.sprite.Group()
 players_stats_sprites = pygame.sprite.Group()
+decks = pygame.sprite.Group()
 
 
 def play(screen, screen_size):
@@ -440,6 +456,8 @@ def play(screen, screen_size):
     balls_stat = pygame.sprite.Group()
     global players_stats_sprites
     players_stats_sprites = pygame.sprite.Group()
+    global decks
+    decks = pygame.sprite.Group()
 
     Card(cards_group, card_id=1001)
     Card(cards_group, card_id=2001)
@@ -478,6 +496,9 @@ def play(screen, screen_size):
     BallsCounters(balls_stat, 6)
     BallsCounters(balls_stat, 7)
 
+    Deck(decks, 0)
+    Deck(decks, 1)
+
     running = True
     card_taked = False
     while running:
@@ -506,4 +527,5 @@ def play(screen, screen_size):
             temp = i.draw_name()
             screen.blit(temp[0], temp[1])
         cards_group.draw(screen)
+        decks.draw(screen)
         pygame.display.flip()
