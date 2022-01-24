@@ -1,8 +1,10 @@
+import asyncio
 import math
 
 import os, platform
 import random
 import sys
+
 from dict_cards_id import cards_ids
 from Settings import get_screen_mode
 import pyautogui
@@ -189,6 +191,7 @@ class Card(pygame.sprite.Sprite):
         self.can_be_placed = True
         self.line = -1
         self.to_pos = (self.rect.centerx, self.rect.centery)
+        self.to_size = self.image.get_size()
 
     def update_to_pos(self):
         self.to_pos = (self.rect.centerx, self.rect.centery)
@@ -206,7 +209,7 @@ class Card(pygame.sprite.Sprite):
 
             distance = math.sqrt(x_target ** 2 + y_target ** 2)
 
-            step = v / fps
+            step = 1700 / fps
             if distance < step:
                 self.rect.centerx = self.to_pos[0]
                 self.rect.centery = self.to_pos[1]
@@ -214,19 +217,39 @@ class Card(pygame.sprite.Sprite):
                 self.rect.centery = self.rect.centery + math.sin(direction) * step
                 self.rect.centerx = self.rect.centerx + math.cos(direction) * step
 
+    def directional_sizing(self):
+        target_size_x, target_size_y = self.image.get_size()
+        if target_size_x != self.to_size[0] or target_size_y != self.to_size[1]:
+            x_target = self.to_size[0] - target_size_x
+            y_target = self.to_size[1] - target_size_y
+            step_x = 190 / fps
+            step_y = 300 / fps
+            if x_target < step_x or y_target < step_y:
+                target_size_x = self.to_size[0]
+                target_size_y = self.to_size[1]
+            else:
+                target_size_y = target_size_y + step_y
+                target_size_x = target_size_x + step_x
+            self.image = load_image(cards_ids[self.card_id][0])
+            self.image = pygame.transform.scale(self.image, (target_size_x, target_size_y))
+
     def update(self, *args):
         if args:
             if self.rect.collidepoint(args[0]) and self.can_be_placed:
                 for cardd in cards_group:
                     if self != cardd and cardd.took:
                         cardd.took = False
+                        # self.to_size = (screen_size[0] // 2 // 12, screen_size[1] // 9)
                         cardd.rect.y += 20
                         cardd.update_to_pos()
                 self.took = True if not self.took else False
                 if self.took:
+                    # self.to_pos = (screen_size[0] // 2 // 12 * 21, screen_size[1] // 9 * 4)
+                    # self.to_size = (self.image.get_size()[0] * 2, self.image.get_size()[0] * 3)
                     self.rect.y -= 20
                     self.update_to_pos()
                 else:
+                    # self.to_size = (screen_size[0] // 2 // 12, screen_size[1] // 9)
                     self.rect.y += 20
                     self.update_to_pos()
             else:
@@ -282,15 +305,8 @@ class Card(pygame.sprite.Sprite):
                         elif 3 <= self.line <= 5:
                             ball = list(filter(lambda x: x.if_part_type(6) is not None, [ball for ball in balls_stat]))[0]
                             ball.score += self.power
-
                         bot.make_move()  # ход бота
-                        # if len(part.cards) >= 1:
-                        #     for card in part.cards:
-                        #         card.to_pos = [card.to_pos[0] - 35, card.to_pos[1]]
-                        #
-                        # part.cards.append(self)
-                        # self.to_pos = (part.rect.centerx + 35, part.rect.centery)
-
+        # self.directional_sizing()
         self.directional_movement()
 
 
@@ -319,6 +335,56 @@ class Table(pygame.sprite.Sprite):
         self.image = Table.image
         self.image = pygame.transform.scale(self.image, screen_size)
         self.rect = self.image.get_rect()
+
+
+class Heart(pygame.sprite.Sprite):
+    bad_heart_image = load_image("board//bad_heart.png")
+    heart_image = load_image("board//heart.png")
+
+    def __init__(self, group, part_type):
+        # НЕОБХОДИМО вызвать конструктор родительского класса Sprite.
+        # Это очень важно !!!
+        super().__init__(group)
+        self.image = Heart.heart_image
+        self.image = pygame.transform.scale(self.image, (screen_size[0] // 22, screen_size[1] // 15))
+        self.rect = self.image.get_rect()
+        self.active = True
+        self.part_type = part_type
+        if part_type == 0:
+            self.rect.x, self.rect.y = (screen_size[0] // 30, screen_size[1] // 14 * 4)
+        elif part_type == 1:
+            self.rect.x, self.rect.y = (int(screen_size[0] // 30 * 2.5), screen_size[1] // 14 * 4)
+        elif part_type == 2:
+            self.rect.x, self.rect.y = (screen_size[0] // 30, screen_size[1] // 14 * 12)
+        elif part_type == 3:
+            self.rect.x, self.rect.y = (int(screen_size[0] // 30 * 2.5), screen_size[1] // 14 * 12)
+
+    def take_heart(self, part_type):
+        if self.part_type == part_type:
+            self.active = False
+            self.image = Heart.bad_heart_image
+            self.image = pygame.transform.scale(self.image, (screen_size[0] // 22, screen_size[1] // 15))
+        #  0 - противник   1 - ты
+
+    def get_hearts(self):
+        return (self.part_type, self.active)
+
+
+###  не трогать, это процесс убирания сердечка у определенного игрока
+# all_hearts = [i.get_hearts() for i in hearts]
+# to_take_heart_part = 1
+# to_take_heart = 0
+# if to_take_heart_part == 0:
+#     if all_hearts[:2][1][1]:
+#         to_take_heart = 1
+#     else:
+#         to_take_heart = 0
+# elif to_take_heart_part == 1:
+#     if all_hearts[2:][1][1]:
+#         to_take_heart = 3
+#     else:
+#         to_take_heart = 2
+# [i.take_heart(to_take_heart) for i in hearts]
 
 
 class PlayersStats(pygame.sprite.Sprite):
@@ -545,6 +611,7 @@ all_parts = pygame.sprite.Group()
 balls_stat = pygame.sprite.Group()
 players_stats_sprites = pygame.sprite.Group()
 decks = pygame.sprite.Group()
+hearts = pygame.sprite.Group()
 bot = Bot()
 
 
@@ -564,6 +631,8 @@ def play(screen, screen_size):
     players_stats_sprites = pygame.sprite.Group()
     global decks
     decks = pygame.sprite.Group()
+    global hearts
+    hearts = pygame.sprite.Group()
 
     Card(cards_group, card_id=1001)
     Card(cards_group, card_id=2001)
@@ -605,6 +674,11 @@ def play(screen, screen_size):
     Deck(decks, 0)
     Deck(decks, 1)
 
+    Heart(hearts, 0)
+    Heart(hearts, 1)
+    Heart(hearts, 2)
+    Heart(hearts, 3)
+
     global bot
     bot = Bot()
 
@@ -637,4 +711,5 @@ def play(screen, screen_size):
             screen.blit(temp[0], temp[1])
         cards_group.draw(screen)
         decks.draw(screen)
+        hearts.draw(screen)
         pygame.display.flip()
