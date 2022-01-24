@@ -7,6 +7,8 @@ from dict_cards_id import cards_ids
 from Settings import get_screen_mode
 import pyautogui
 import pygame
+# from bot import Bot
+
 
 # Изображение не получится загрузить
 # без предварительной инициализации pygame
@@ -36,7 +38,7 @@ else:
 
 parts_dict = {0: 'Твоя линия осадных карт', 1: 'Твоя линия дальников', 2: 'Твоя линия ближников',
               3: 'Линия противника ближников', 4: 'Линия противника дальников', 5: 'Линия противника осадных карт'}
-
+another_parts_dict = {0: 5, 1: 4, 2: 3}
 x_for_parts_coords, y_for_parts_coords = int(screen_size[0] / 3.5), screen_size[1] // 10
 some_to_plus = int(screen_size[1] // 10 // 5)
 parts_coord = {0: (x_for_parts_coords, y_for_parts_coords), 1: (x_for_parts_coords, y_for_parts_coords * 2 + some_to_plus),
@@ -67,13 +69,111 @@ def load_image(name, colorkey=None):
     return image
 
 
+class Bot:
+    def __init__(self):
+        self.deck = [i for i in list(cards_ids.keys())[:20]]
+        random.shuffle(self.deck)
+        self.cards = [i for i in self.deck[:10]]
+
+    def make_move(self):
+        card_to_place = random.choice(self.cards)  # выбор карты
+        self.cards.remove(card_to_place)
+        part_to_place = cards_ids[card_to_place][-1]  # получение айди линии для карты
+        part = list(filter(lambda x: x.if_part_type(part_to_place) is not None, [part for part in all_parts]))[0]
+        BotCard(cards_group, card_to_place, part)
+
+
+class BotCard(pygame.sprite.Sprite):
+
+    def __init__(self, group, card_id, part):
+        super().__init__(group)
+        self.image = load_image(cards_ids[card_id][0])
+        self.image = pygame.transform.scale(self.image, (screen_size[0] // 2 // 12, screen_size[1] // 9))
+        # self.image = pygame.transform.scale(self.image, (70, 96))
+        self.rect = self.image.get_rect()
+        self.rect.centerx, self.rect.centery = (screen_size[0] // 2, screen_size[1] // 12 * -1)
+        self.card_id = card_id
+        self.card_name = cards_ids[card_id][1]
+        self.power = cards_ids[card_id][2]
+        self.card_type = cards_ids[card_id][-1]
+        self.line = -1
+        self.to_pos = (self.rect.centerx, self.rect.centery)
+        self.part = part
+        self.need_to_place = True
+        self.took = False
+
+    def update_to_pos(self):
+        self.to_pos = (self.rect.centerx, self.rect.centery)
+
+    def get_cards(self):
+        return
+
+    # Движение к заданным координатам
+    def directional_movement(self):
+        if self.rect.centerx != self.to_pos[0] or self.rect.centery != self.to_pos[1]:
+            x_target = self.to_pos[0] - self.rect.centerx
+            y_target = self.to_pos[1] - self.rect.centery
+
+            direction = math.atan2(y_target, x_target)
+
+            distance = math.sqrt(x_target ** 2 + y_target ** 2)
+
+            step = v / fps
+            if distance < step:
+                self.rect.centerx = self.to_pos[0]
+                self.rect.centery = self.to_pos[1]
+            else:
+                self.rect.centery = self.rect.centery + math.sin(direction) * step
+                self.rect.centerx = self.rect.centerx + math.cos(direction) * step
+
+    def update(self, *args):
+        if self.need_to_place:
+            self.need_to_place = False
+            card_size_x, card_size_y = self.image.get_size()
+            self.line = self.part.return_part_type()
+            self.to_pos = self.part.rect.center
+            counter = 0
+            self.part.cards.append(self)
+            cards_len = len(self.part.cards)
+            left_cards = cards_len // 2
+            middle_cards = cards_len - cards_len // 2 - cards_len // 2
+            right_cards = cards_len // 2
+            cards_pos = []
+            if middle_cards == 1:
+                for i in range(1, left_cards + 1):
+                    cards_pos.insert(-1, -card_size_x * i)
+                cards_pos.append(0)
+                for i in range(1, right_cards + 1):
+                    cards_pos.append(card_size_x * i)
+            else:
+                temp = 0
+                for i in range(1, left_cards + 1):
+                    cards_pos.insert(-1, -(card_size_x // 2) * i + temp)
+                    temp += -(card_size_x // 2)
+                temp = 0
+                for i in range(1, right_cards + 1):
+                    cards_pos.append((card_size_x // 2) * i + temp)
+                    temp += (card_size_x // 2)
+            counter = 0
+            for card in self.part.cards:
+                card.to_pos = [self.part.rect.centerx + cards_pos[counter], self.part.rect.centery]
+                counter += 1
+            ball = list(filter(lambda x: x.if_part_type(self.line) is not None, [i for i in balls_stat]))[0]
+            ball.score += self.power
+            if 0 <= self.line <= 2:
+                ball = list(filter(lambda x: x.if_part_type(7) is not None, [ball for ball in balls_stat]))[0]
+                ball.score += self.power
+            elif 3 <= self.line <= 5:
+                ball = list(filter(lambda x: x.if_part_type(6) is not None, [ball for ball in balls_stat]))[0]
+                ball.score += self.power
+        self.directional_movement()
+
+
 class Card(pygame.sprite.Sprite):
 
     # image = load_image(cards_ids[card_id][0])
 
-    def __init__(self, group, card_id):
-        # НЕОБХОДИМО вызвать конструктор родительского класса Sprite.
-        # Это очень важно !!!
+    def __init__(self, group, card_id, ):
         super().__init__(group)
         self.image = load_image(cards_ids[card_id][0])
 
@@ -85,7 +185,7 @@ class Card(pygame.sprite.Sprite):
         self.card_id = card_id
         self.card_name = cards_ids[card_id][1]
         self.power = cards_ids[card_id][2]
-        self.card_type = cards_ids[card_id][3]
+        self.card_type = another_parts_dict[cards_ids[card_id][3]]
         self.can_be_placed = True
         self.line = -1
         self.to_pos = (self.rect.centerx, self.rect.centery)
@@ -182,6 +282,8 @@ class Card(pygame.sprite.Sprite):
                         elif 3 <= self.line <= 5:
                             ball = list(filter(lambda x: x.if_part_type(6) is not None, [ball for ball in balls_stat]))[0]
                             ball.score += self.power
+
+                        bot.make_move()  # ход бота
                         # if len(part.cards) >= 1:
                         #     for card in part.cards:
                         #         card.to_pos = [card.to_pos[0] - 35, card.to_pos[1]]
@@ -242,7 +344,7 @@ class PlayersStats(pygame.sprite.Sprite):
     def draw_text(self):
         count_my_cards = 0
         if self.part_type == 0:
-            count_my_cards = 0  # кол-во карт врага
+            count_my_cards = len(bot.cards)
         if self.part_type == 1:
             count_my_cards = count_my_cards = [i.get_count_cards() for i in my_part][0]  # кол-во карт моих
         font = pygame.font.Font('our_font.otf', 70)
@@ -358,6 +460,9 @@ class Parts(pygame.sprite.Sprite):
         if self.rect.collidepoint(coords):
             return self.part_type
 
+    def return_part_type(self):
+        return self.part_type
+
     def if_part_type(self, part_type):
         if part_type == self.part_type:
             return self
@@ -440,6 +545,7 @@ all_parts = pygame.sprite.Group()
 balls_stat = pygame.sprite.Group()
 players_stats_sprites = pygame.sprite.Group()
 decks = pygame.sprite.Group()
+bot = Bot()
 
 
 def play(screen, screen_size):
@@ -498,6 +604,9 @@ def play(screen, screen_size):
 
     Deck(decks, 0)
     Deck(decks, 1)
+
+    global bot
+    bot = Bot()
 
     running = True
     card_taked = False
