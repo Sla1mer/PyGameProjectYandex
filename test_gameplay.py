@@ -3,6 +3,7 @@ import math
 
 import os, platform
 import random
+import sqlite3
 import sys
 
 from dict_cards_id import cards_ids
@@ -656,17 +657,14 @@ def play(screen, screen_size):
     decks = pygame.sprite.Group()
     global hearts
     hearts = pygame.sprite.Group()
+    # для назара
+    with sqlite3.connect('users.db') as db:
+        cur = db.cursor()
+        query = '''SELECT deck FROM all_user_games WHERE id = ?'''
+        cur.execute(query, (1,))
+        for i in cur.fetchall()[0][0].strip('{').strip('}').split(','):
+            Card(cards_group, card_id=int(i))
 
-    Card(cards_group, card_id=1001)
-    Card(cards_group, card_id=2001)
-    Card(cards_group, card_id=3001)
-    Card(cards_group, card_id=4001)
-    Card(cards_group, card_id=5001)
-    Card(cards_group, card_id=6001)
-    Card(cards_group, card_id=7001)
-    Card(cards_group, card_id=8001)
-    Card(cards_group, card_id=9001)
-    Card(cards_group, card_id=10001)
 
     Table(board)
 
