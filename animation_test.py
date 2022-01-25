@@ -1,4 +1,4 @@
-import pygame, random
+import pygame, random, sqlite3
 from load_img import load_image
 from dict_cards_id import cards_ids
 from button_class import Button
@@ -6,7 +6,7 @@ from particle_class import create_particles, all_parcticles
 from play_sound import play_sound
 
 all_new_card = pygame.sprite.Group()
-
+random_pick = set()
 
 class Card_Chest(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, size):
@@ -20,6 +20,15 @@ class Card_Chest(pygame.sprite.Sprite):
             self.sprites.append(pygame.transform.scale(load_image(f'{i}.png'), (size)))
             self.sprites.append(pygame.transform.scale(load_image(f'{i}.png'), (size)))
             self.sprites.append(pygame.transform.scale(load_image(f'{i}.png'), (size)))
+            self.sprites.append(pygame.transform.scale(load_image(f'{i}.png'), (size)))
+            self.sprites.append(pygame.transform.scale(load_image(f'{i}.png'), (size)))
+            self.sprites.append(pygame.transform.scale(load_image(f'{i}.png'), (size)))
+            self.sprites.append(pygame.transform.scale(load_image(f'{i}.png'), (size)))
+            self.sprites.append(pygame.transform.scale(load_image(f'{i}.png'), (size)))
+            self.sprites.append(pygame.transform.scale(load_image(f'{i}.png'), (size)))
+            self.sprites.append(pygame.transform.scale(load_image(f'{i}.png'), (size)))
+            self.sprites.append(pygame.transform.scale(load_image(f'{i}.png'), (size)))
+            self.sprites.append(pygame.transform.scale(load_image(f'{i}.png'), (size)))
 
         self.current_sprite = 0
         self.image = self.sprites[self.current_sprite]
@@ -27,9 +36,10 @@ class Card_Chest(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.topleft = [pos_x,pos_y]
 
-    def open(self, size):
+    def open(self, size, screen_size):
         self.open_animation = True
         self.size = size
+        self.screen_size = screen_size
 
     def update(self, speed):
         if self.open_animation:
@@ -37,7 +47,7 @@ class Card_Chest(pygame.sprite.Sprite):
             if int(self.current_sprite) >= len(self.sprites):
                 self.current_sprite = 0
                 self.open_animation = False
-                new_deck(self.size)
+                new_deck(self.size, self.screen_size)
 
         self.image = self.sprites[int(self.current_sprite)]
 
@@ -56,22 +66,36 @@ class Unlock_Card(pygame.sprite.Sprite):
 
 
 def get_random_deck():
-    random_pick = set()
+    global random_pick
+    random_pick.clear()
     while True:
-        if len(random_pick) == 11:
+        if len(random_pick) == 10:
             break
         random_pick.add(random.choice(list(cards_ids.keys())))
     return random_pick
 
 
-def new_deck(size):
+def new_deck(size, screen_size):
     for index, id in enumerate(get_random_deck()):
         card = cards_ids[id]
-        all_new_card.add(Unlock_Card(card, (index * 200, 100), size))
+        if index < 5:
+            all_new_card.add(Unlock_Card(card, (screen_size[0] // 6 + index * (screen_size[0] // 8), screen_size[1] // 5), size))
+        else:
+            index = index - 5
+            all_new_card.add(Unlock_Card(card, (screen_size[0] // 6 + index * (screen_size[0] // 8), screen_size[1] // 3 * 2), size))
 
+
+
+def write_new_deck():
+    print(random_pick)
+    with sqlite3.connect('users.db') as db:
+        cur = db.cursor()
+        query = '''INSERT INTO all_user_games(deck) VALUES(?)'''
+        cur.execute(query, (str(random_pick),))
 
 
 def open_chest(screen, screen_size):
+
     bg = pygame.transform.scale(load_image('background.jpg'), (screen_size[0], screen_size[1]))
     mainClock = pygame.time.Clock()
     moving_sprites = pygame.sprite.Group()
@@ -81,8 +105,9 @@ def open_chest(screen, screen_size):
     moving_sprites.add(chest)
     card_size = (screen_size[0] // 14, screen_size[1] // 7)
     all_buttons = pygame.sprite.Group()
-    all_buttons.add(Button(700, 800,
-                           "print('ты лох')", 'button_start_game.png', (200, 100)))
+    all_buttons.add(Button(screen_size[0] * 0.8, screen_size[1] * 0.7,
+                           "write_new_deck()", 'button_change_deck.png', (screen_size[0] // 7.2, screen_size[1] // 9)))
+
     running = True
     while running:
         for event in pygame.event.get():
@@ -95,7 +120,7 @@ def open_chest(screen, screen_size):
                 if chest.rect.collidepoint(event.pos):
                     for i in all_new_card:
                         i.kill()
-                    chest.open(card_size)
+                    chest.open(card_size, screen_size)
                 for button in all_buttons:
                     if button.rect.collidepoint(event.pos):
                         # при нажатии на кнопку проигрываю звук, создаю партикл и ивалю ее функцию
@@ -105,7 +130,7 @@ def open_chest(screen, screen_size):
 
         screen.blit(bg, (0, 0))
         moving_sprites.draw(screen)
-        moving_sprites.update(1.5)
+        moving_sprites.update(4)
         all_new_card.draw(screen)
         all_buttons.draw(screen)
         all_parcticles.draw(screen)
