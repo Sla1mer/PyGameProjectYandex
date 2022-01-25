@@ -54,6 +54,32 @@ board_lines_path_data = {0: ("board//line_siege.png", "board//line_siege_selecte
                          3: ("board//line_swords2.png", "board//line_swords_selected.png")}
 
 
+class GameProcess:
+    def __init__(self):
+        self.bot_passed = False
+        self.player_passed = False
+        self.bot_hearts = 2
+        self.player_hearts = 2
+        self.placing_card = True
+        self.bot_wants_place_card = False
+
+    def take_health(self, player):
+        all_hearts = [i.get_hearts() for i in hearts]
+        to_take_heart_part = player  # 1 - это ты   0 - это противник
+        to_take_heart = 0
+        if to_take_heart_part == 0:
+            if all_hearts[:2][1][1]:
+                to_take_heart = 1
+            else:
+                to_take_heart = 0
+        elif to_take_heart_part == 1:
+            if all_hearts[2:][1][1]:
+                to_take_heart = 3
+            else:
+                to_take_heart = 2
+        [i.take_heart(to_take_heart) for i in hearts]
+
+
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
     # если файл не существует, то выходим
@@ -217,6 +243,14 @@ class Card(pygame.sprite.Sprite):
                 self.rect.centery = self.rect.centery + math.sin(direction) * step
                 self.rect.centerx = self.rect.centerx + math.cos(direction) * step
 
+        if self.rect.centerx == self.to_pos[0] or self.rect.centery == self.to_pos[1]:
+            game.placing_card = False
+            if game.bot_wants_place_card:
+                print('moving')
+                # pygame.time.wait(2000)
+                game.bot_wants_place_card = False
+                bot.make_move()  # ход бота
+
     def directional_sizing(self):
         target_size_x, target_size_y = self.image.get_size()
         if target_size_x != self.to_size[0] or target_size_y != self.to_size[1]:
@@ -305,7 +339,7 @@ class Card(pygame.sprite.Sprite):
                         elif 3 <= self.line <= 5:
                             ball = list(filter(lambda x: x.if_part_type(6) is not None, [ball for ball in balls_stat]))[0]
                             ball.score += self.power
-                        bot.make_move()  # ход бота
+                        game.bot_wants_place_card = True
         # self.directional_sizing()
         self.directional_movement()
 
@@ -371,20 +405,7 @@ class Heart(pygame.sprite.Sprite):
 
 
 ###  не трогать, это процесс убирания сердечка у определенного игрока
-# all_hearts = [i.get_hearts() for i in hearts]
-# to_take_heart_part = 1
-# to_take_heart = 0
-# if to_take_heart_part == 0:
-#     if all_hearts[:2][1][1]:
-#         to_take_heart = 1
-#     else:
-#         to_take_heart = 0
-# elif to_take_heart_part == 1:
-#     if all_hearts[2:][1][1]:
-#         to_take_heart = 3
-#     else:
-#         to_take_heart = 2
-# [i.take_heart(to_take_heart) for i in hearts]
+
 
 
 class PlayersStats(pygame.sprite.Sprite):
@@ -602,6 +623,7 @@ class BallsCounters(pygame.sprite.Sprite):
     #                       (154, 48, 48))
     #     screen.blit(text1, self.rect.center)
 
+
 v = 1500
 fps = 60
 cards_group = pygame.sprite.Group()
@@ -613,6 +635,7 @@ players_stats_sprites = pygame.sprite.Group()
 decks = pygame.sprite.Group()
 hearts = pygame.sprite.Group()
 bot = Bot()
+game = GameProcess()
 
 
 def play(screen, screen_size):
@@ -681,6 +704,9 @@ def play(screen, screen_size):
 
     global bot
     bot = Bot()
+
+    global game
+    game = GameProcess()
 
     running = True
     card_taked = False
