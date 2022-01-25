@@ -10,6 +10,7 @@ from play_sound import play_sound, change_volume, game_volume
 from button_class import Button
 from draw_text import draw_text
 from Settings import get_screen_mode
+from disable_button_auth import get_is_login
 
 # не используемые импорты не трогать они работают на самом деле!!!!!
 from open_doc import open_documentation
@@ -28,12 +29,14 @@ pygame.init()
 pygame.display.set_caption('Крутая карточная игра')
 if platform.system() == 'Windows':  # Windows
     from win32api import GetMonitorInfo, MonitorFromPoint
+
     monitor_info = GetMonitorInfo(MonitorFromPoint((0, 0)))
     monitor_area = monitor_info.get("Monitor")
     work_area = monitor_info.get("Work")
 
     if get_screen_mode():
-        screen = pygame.display.set_mode((screen_size[0], screen_size[1] - (monitor_area[3] - work_area[3])), pygame.FULLSCREEN)
+        screen = pygame.display.set_mode((screen_size[0], screen_size[1] - (monitor_area[3] - work_area[3])),
+                                         pygame.FULLSCREEN)
     else:
         screen = pygame.display.set_mode((screen_size[0], screen_size[1] - (monitor_area[3] - work_area[3])))
 else:
@@ -127,6 +130,18 @@ all_buttons.add(Button(width - 60, 10, "webbrowser.open('https://github.com/Sla1
 # Задний фон
 bg = pygame.transform.scale(load_image('background.jpg'), (width, height))
 
+
+# Функция, которая возращает True or False, в зависимости, правильная ли кнопка нажата или нет
+def disable_button(button):
+    return (button.update() == "autho(login.give_text(), password.give_text())" or
+            button.update() == "reg(login.give_text(), password.give_text(), screen, width, height)") and \
+           get_is_login()
+
+
+# Список для удаление объектов
+delete_objects = []
+
+
 def main_menu():
     while True:
         # выход из игры
@@ -137,14 +152,22 @@ def main_menu():
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 for button in all_buttons:
+                    # Если нажата кнопка "Войти" или "Зарегистрироваться", то уничтожаем её
+                    if disable_button(button):
+                        delete_objects.append(button)
+                        input_boxes.clear()
+                        all_buttons.remove(button)
+
                     if button.rect.collidepoint(event.pos):
                         # при нажатии на кнопку проигрываю звук, создаю партикл и ивалю ее функцию
                         play_sound('button_click.wav')
                         create_particles(pygame.mouse.get_pos())
                         eval(button.update())
 
-            for box in input_boxes:
-                box.handle_event(event)
+            # Если список полей ввода не пустой, то рисуем их
+            if len(input_boxes) != 0:
+                for box in input_boxes:
+                    box.handle_event(event)
 
         # подгружаю задний фон
         screen.blit(bg, (0, 0))
@@ -152,12 +175,13 @@ def main_menu():
 
         all_buttons.draw(screen)
 
-        for box in input_boxes:
-            box.update()
+        # Если список полей ввода не пустой, то рисуем их
+        if len(input_boxes) != 0:
+            for box in input_boxes:
+                box.update()
 
         all_parcticles.draw(screen)
         all_parcticles.update()
 
         pygame.display.update()
         mainClock.tick(60)
-
