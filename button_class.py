@@ -4,7 +4,8 @@ from load_img import load_image
 all_buttons = pygame.sprite.Group()
 
 
-# Класс кнопок при инициализации надо передать позицию, строку функционала которую она выполняет( с помощью eval), и размер автоматом стоит хрень какая-то
+# Класс кнопок при инициализации надо передать позицию, строку функционала которую она выполняет( с помощью eval),
+# и размер автоматом стоит хрень какая-то
 class Button(pygame.sprite.Sprite):
     def __init__(self, x_pos, y_pos, func: str, path, size=(200, 100)):
         super().__init__(all_buttons)

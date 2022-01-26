@@ -1,10 +1,14 @@
 import hashlib
 import sqlite3 as sq
 
+import pyautogui
+import pygame
+
+import test_menu
 from check_password import check_password
 from draw_text import draw_text
 from threading import Thread
-
+from disable_button_auth import set_is_login, get_is_login
 
 # Регистрация пользователя
 def reg(login, password, screen, width, height):
@@ -15,6 +19,11 @@ def reg(login, password, screen, width, height):
                 cur.execute("INSERT INTO users (login, password) VALUES (?, ?)",
                             (login, hashlib.sha256(password.lower().encode("utf-8")).hexdigest()))
                 db.commit()
+                set_is_login(not get_is_login())
+                # Здесь происходит двойной щелчок по левой кнопке мышки, что бы очистить группу спрайтов от ненужных
+                # кнопок
+                pyautogui.click(pygame.mouse.get_pos())
+                pyautogui.click(pygame.mouse.get_pos())
                 return (True, None)
         except:
             return (False, 'Логин уже существует')
@@ -32,6 +41,11 @@ def autho(login, password):
             if cur.fetchall()[0][0] == \
                     hashlib.sha256(password.lower().encode("utf-8")).hexdigest():
                 print('ok')
+                set_is_login(not get_is_login())
+                # Здесь происходит двойной щелчок по левой кнопке мышки, что бы очистить группу спрайтов от ненужных
+                # кнопок
+                pyautogui.click(pygame.mouse.get_pos())
+                pyautogui.click(pygame.mouse.get_pos())
                 return True
         except IndexError:
             return False
