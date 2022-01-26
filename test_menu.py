@@ -134,6 +134,11 @@ all_buttons.add(Button(width - 60, 10, "webbrowser.open('https://github.com/Sla1
 bg = pygame.transform.scale(load_image('background.jpg'), (width, height))
 
 
+def is_play_or_is_deck(button):
+    return (button.update() == "open_chest(screen, screen_size)"
+            or button.update() == "play(screen, screen_size)")
+
+
 # Функция, которая возращает True or False, в зависимости, правильная ли кнопка нажата или нет
 def disable_button(button):
     return (button.update() == "autho(login.give_text(), password.give_text())" or
@@ -165,6 +170,12 @@ def main_menu():
                         # при нажатии на кнопку проигрываю звук, создаю партикл и ивалю ее функцию
                         play_sound('button_click.wav')
                         create_particles(pygame.mouse.get_pos())
+                        if is_play_or_is_deck(button):
+                            if get_is_login():
+                                eval(button.update())
+                            else:
+                                continue
+
                         eval(button.update())
 
             # Если список полей ввода не пустой, то рисуем их

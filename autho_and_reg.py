@@ -10,7 +10,6 @@ from draw_text import draw_text
 from threading import Thread
 from disable_button_auth import set_is_login, get_is_login
 from Settings import set_login
-from DBHelper import get_is_online
 
 
 # Регистрация пользователя
@@ -45,7 +44,8 @@ def autho(login, password):
                     hashlib.sha256(password.lower().encode("utf-8")).hexdigest():
                 print('ok')
                 set_login(login)
-                set_is_login(not get_is_login())
+                if not get_is_login():
+                    set_is_login(not get_is_login())
                 # Здесь происходит двойной щелчок по левой кнопке мышки, что бы очистить группу спрайтов от ненужных
                 # кнопок
                 pyautogui.click(pygame.mouse.get_pos())
