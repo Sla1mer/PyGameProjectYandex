@@ -9,7 +9,7 @@ import pyautogui
 from play_sound import play_sound, change_volume, game_volume
 from button_class import Button
 from draw_text import draw_text
-from Settings import get_screen_mode
+from Settings import get_screen_mode, get_login
 from disable_button_auth import get_is_login
 
 # не используемые импорты не трогать они работают на самом деле!!!!!
@@ -90,7 +90,10 @@ class InputBox:
 
 # Создаю кнопки и поля ввода, все расчеты делал на глаз так чтобы выглядело красиво
 box_size = screen_size[0] // 4, screen_size[1] // 16
-login = InputBox(screen_size[0] - screen_size[0] // 3, screen_size[1] - box_size[1] * 5 - box_size[1] // 2, box_size)
+
+login = InputBox(screen_size[0] - screen_size[0] // 3, screen_size[1] - box_size[1] * 5 - box_size[1] // 2,
+                 box_size, text=get_login())
+
 password = InputBox(screen_size[0] - screen_size[0] // 3, screen_size[1] - box_size[1] * 4, box_size)
 input_boxes = [login, password]
 button_size = screen_size[0] // 7.2, screen_size[1] // 9

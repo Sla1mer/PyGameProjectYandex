@@ -9,6 +9,8 @@ from check_password import check_password
 from draw_text import draw_text
 from threading import Thread
 from disable_button_auth import set_is_login, get_is_login
+from Settings import set_login
+
 
 # Регистрация пользователя
 def reg(login, password, screen, width, height):
@@ -41,6 +43,7 @@ def autho(login, password):
             if cur.fetchall()[0][0] == \
                     hashlib.sha256(password.lower().encode("utf-8")).hexdigest():
                 print('ok')
+                set_login(login)
                 set_is_login(not get_is_login())
                 # Здесь происходит двойной щелчок по левой кнопке мышки, что бы очистить группу спрайтов от ненужных
                 # кнопок
