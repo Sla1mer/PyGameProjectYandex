@@ -4,9 +4,11 @@ from dict_cards_id import cards_ids
 from button_class import Button
 from particle_class import create_particles, all_parcticles
 from play_sound import play_sound
+from Settings import get_login
 
 all_new_card = pygame.sprite.Group()
 random_pick = set()
+
 
 class Card_Chest(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, size):
@@ -34,7 +36,7 @@ class Card_Chest(pygame.sprite.Sprite):
         self.image = self.sprites[self.current_sprite]
 
         self.rect = self.image.get_rect()
-        self.rect.topleft = [pos_x,pos_y]
+        self.rect.topleft = [pos_x, pos_y]
 
     def open(self, size, screen_size):
         self.open_animation = True
@@ -79,29 +81,30 @@ def new_deck(size, screen_size):
     for index, id in enumerate(get_random_deck()):
         card = cards_ids[id]
         if index < 5:
-            all_new_card.add(Unlock_Card(card, (screen_size[0] // 6 + index * (screen_size[0] // 8), screen_size[1] // 5), size))
+            all_new_card.add(
+                Unlock_Card(card, (screen_size[0] // 6 + index * (screen_size[0] // 8), screen_size[1] // 5), size))
         else:
             index = index - 5
-            all_new_card.add(Unlock_Card(card, (screen_size[0] // 6 + index * (screen_size[0] // 8), screen_size[1] // 3 * 2), size))
-
+            all_new_card.add(
+                Unlock_Card(card, (screen_size[0] // 6 + index * (screen_size[0] // 8), screen_size[1] // 3 * 2), size))
 
 
 def write_new_deck():
     print(random_pick)
     with sqlite3.connect('users.db') as db:
         cur = db.cursor()
-        query = '''INSERT INTO all_user_games(deck) VALUES(?)'''
+        query = f"UPDATE users SET deck = ? WHERE login = '{get_login()}'"
         cur.execute(query, (str(random_pick),))
 
 
 def open_chest(screen, screen_size):
-
     bg = pygame.transform.scale(load_image('background.jpg'), (screen_size[0], screen_size[1]))
     mainClock = pygame.time.Clock()
     moving_sprites = pygame.sprite.Group()
     chest_size_x = screen_size[0] * 0.1
     chest_size_y = screen_size[0] * 0.1
-    chest = Card_Chest(screen_size[0] // 2 - 2.1 * chest_size_x, screen_size[1] // 2 - chest_size_y * 0.8 , (chest_size_x, chest_size_y))
+    chest = Card_Chest(screen_size[0] // 2 - 2.1 * chest_size_x, screen_size[1] // 2 - chest_size_y * 0.8,
+                       (chest_size_x, chest_size_y))
     moving_sprites.add(chest)
     card_size = (screen_size[0] // 14, screen_size[1] // 7)
     all_buttons = pygame.sprite.Group()

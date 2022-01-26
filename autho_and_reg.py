@@ -10,6 +10,7 @@ from draw_text import draw_text
 from threading import Thread
 from disable_button_auth import set_is_login, get_is_login
 from Settings import set_login
+from DBHelper import get_is_online
 
 
 # Регистрация пользователя
