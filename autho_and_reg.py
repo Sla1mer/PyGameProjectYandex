@@ -22,6 +22,7 @@ def reg(login, password, screen, width, height):
                             (login, hashlib.sha256(password.lower().encode("utf-8")).hexdigest()))
                 db.commit()
                 set_is_login(not get_is_login())
+                set_login(login)
                 # Здесь происходит двойной щелчок по левой кнопке мышки, что бы очистить группу спрайтов от ненужных
                 # кнопок
                 pyautogui.click(pygame.mouse.get_pos())
