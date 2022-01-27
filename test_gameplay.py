@@ -5,6 +5,7 @@ import os, platform
 import random
 import sqlite3
 import sys
+import time
 
 from dict_cards_id import cards_ids
 from Settings import get_screen_mode
@@ -65,6 +66,7 @@ class GameProcess:
         self.player_hearts = 2
         self.placing_card = True
         self.bot_wants_place_card = False
+        self.round_ended = False
 
     def take_health(self, player):
         all_hearts = [i.get_hearts() for i in hearts]
@@ -89,16 +91,32 @@ class GameProcess:
 
         if enemy_ball.score > your_ball.score:
             self.take_health(1)
+            self.player_hearts -= 1
             # print('противник выйграл')
+            # сюда результат раунда
 
         elif enemy_ball.score < your_ball.score:
             self.take_health(0)
+            self.bot_hearts -= 1
             # print('ты выйграл')
+            # сюда результат раунда
 
         elif enemy_ball.score == your_ball.score:
             rand = random.randint(0, 1)
             self.take_health(rand)
+            if rand == 0:
+                self.bot_hearts -= 1
+            else:
+                self.player_hearts -= 1
             # print('ничья')
+
+        # проверка на конец игры
+        if self.player_hearts == 0:
+            print('победил противник')
+            # сюда результат игры
+        elif self.bot_hearts == 0:
+            print('ты победил')
+            # сюда результат игры
 
         # очистка доски от карт
         enemy_deck = list(filter(lambda x: x.if_deck_type(0) is not None, [deck for deck in decks]))[0]
@@ -124,18 +142,30 @@ class GameProcess:
         global white_blocks
         white_blocks = pygame.sprite.Group()
 
-
     def process_pass_enemy(self):
         self.bot_passed = True
         WhiteBlock(white_blocks, 0)
         if self.player_passed:
-            self.process_round()
+            self.round_ended = True
+            global timer_to_place
+            timer_to_place = time.time()
+            # self.process_round()
 
     def process_pass_you(self):
         self.player_passed = True
         WhiteBlock(white_blocks, 1)
         if self.bot_passed:
-            self.process_round()
+            self.round_ended = True
+            global timer_to_place
+            timer_to_place = time.time()
+            # self.process_round()
+
+    def update(self):
+        if self.round_ended:
+            global timer_to_place
+            if time.time() - timer_to_place > 3:
+                self.process_round()
+                self.round_ended = False
 
 
 def load_image(name, colorkey=None):
@@ -176,6 +206,7 @@ class Bot:
         self.deck = [i for i in list(cards_ids.keys())[:20]]
         random.shuffle(self.deck)
         self.cards = [i for i in self.deck[:10]]
+        self.cards_to_place = []
 
     def make_move(self):
         if game.bot_passed:
@@ -185,6 +216,8 @@ class Bot:
         part_to_place = cards_ids[card_to_place][-1]  # получение айди линии для карты
         part = list(filter(lambda x: x.if_part_type(part_to_place) is not None, [part for part in all_parts]))[0]
         BotCard(cards_group, card_to_place, part)
+        if len(self.cards) == 0:
+            game.process_pass_enemy()
 
     def place_card(self, card_id: int):
         card_to_place = card_id  # выбор карты
@@ -204,19 +237,37 @@ class Bot:
         enemy_score = enemy_ball.score
         your_score = your_ball.score
 
+        global timer_to_place
         if enemy_score > your_score:
             game.process_pass_enemy()
         elif enemy_score < your_score:
             if enemy_score + all_bot_power > your_score:
-                while True:
-                    enemy_ball = list(filter(lambda x: x.if_part_type(7) is not None, [ball for ball in balls_stat]))[
-                        0]  # противник
-                    enemy_score = enemy_ball.score
-                    print(enemy_score)
-                    if enemy_score > your_score:
-                        game.process_pass_enemy()
+                temp_power = 0
+                cards_to_place = []
+                for card in self.cards:
+                    temp_power += cards_ids[card][2]
+                    cards_to_place.append(card)
+                    if enemy_score + temp_power > your_score:
                         break
-                    self.make_move()
+                self.cards_to_place = cards_to_place
+                timer_to_place = time.time()
+            else:
+                game.process_pass_enemy()
+        elif enemy_score == your_score:
+            temp_power = 0
+            cards_to_place = [random.choice(self.cards)]
+            self.cards_to_place = cards_to_place
+            timer_to_place = time.time()
+
+    def update(self):
+        if self.cards_to_place:
+            global timer_to_place
+            if time.time() - timer_to_place > 1:
+                self.place_card(self.cards_to_place[0])
+                self.cards_to_place.remove(self.cards_to_place[0])
+                timer_to_place = time.time()
+                if not self.cards_to_place:
+                    game.process_pass_enemy()
 
 
 class BotCard(pygame.sprite.Sprite):
@@ -357,10 +408,8 @@ class Card(pygame.sprite.Sprite):
 
         if self.rect.centerx == self.to_pos[0] and self.rect.centery == self.to_pos[1]:
             game.placing_card = False
-            if game.bot_wants_place_card:
-                print('надо', self.to_pos)
-                print('сейчас', self.rect.center)
-                pygame.time.wait(1000)
+            global timer_to_place
+            if game.bot_wants_place_card and int(time.time() - timer_to_place) >= 1:
                 game.bot_wants_place_card = False
                 bot.make_move()  # ход бота
 
@@ -453,6 +502,8 @@ class Card(pygame.sprite.Sprite):
                             ball = list(filter(lambda x: x.if_part_type(6) is not None, [ball for ball in balls_stat]))[0]
                             ball.score += self.power
                         game.bot_wants_place_card = True
+                        global timer_to_place
+                        timer_to_place = time.time()
         # self.directional_sizing()
         self.directional_movement()
 
@@ -768,6 +819,7 @@ buttons = pygame.sprite.Group()
 white_blocks = pygame.sprite.Group()
 bot = Bot()
 game = GameProcess()
+timer_to_place = 0
 
 
 def play(screen, screen_size):
@@ -885,4 +937,6 @@ def play(screen, screen_size):
         white_blocks.draw(screen)
         all_parcticles.draw(screen)
         all_parcticles.update()
+        bot.update()
+        game.update()
         pygame.display.flip()
