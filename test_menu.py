@@ -20,6 +20,7 @@ import random
 import os
 from test_settings import options
 import webbrowser
+from finish_screen import terminate
 
 width, height = pyautogui.size()
 # Инициализация игрового поля
@@ -117,6 +118,9 @@ all_buttons.add(Button(menu_button_pos_x, menu_button_pos_y * 5,
 
 all_buttons.add(Button(menu_button_pos_x, menu_button_pos_y * 6,
                        "print('сделать')", 'button_stats.png', button_size))
+
+all_buttons.add(Button(menu_button_pos_x, menu_button_pos_y * 7,
+                       "terminate()", 'exit.png', button_size))
 
 all_buttons.add(Button(screen_size[0] - screen_size[0] // 3,
                        screen_size[1] - auth_button_size[1] * 4.2 - auth_button_size[1] // 4,
