@@ -14,6 +14,7 @@ import pygame
 from particle_class import all_parcticles, create_particles
 from play_sound import play_sound, change_volume, game_volume
 # from bot import Bot
+from Settings import get_login
 
 
 # Изображение не получится загрузить
@@ -851,8 +852,8 @@ def play(screen, screen_size):
     # для назара
     with sqlite3.connect('users.db') as db:
         cur = db.cursor()
-        query = '''SELECT deck FROM all_user_games WHERE id = ?'''
-        cur.execute(query, (1,))
+        query = '''SELECT deck FROM users WHERE login = ?'''
+        cur.execute(query, (get_login(),))
         for i in cur.fetchall()[0][0].strip('{').strip('}').split(','):
             Card(cards_group, card_id=int(i))
 

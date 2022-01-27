@@ -29,3 +29,18 @@ def set_screen_mode(flag):
 
     with open("settings.json", "w", encoding='utf8') as settings:
         settings.write(json.dumps(data))
+
+
+def set_login(login):
+    with open("settings.json") as settings:
+        data = json.load(settings)
+        data["login"] = login
+
+    with open("settings.json", "w", encoding='utf8') as settings:
+        settings.write(json.dumps(data))
+
+
+def get_login():
+    with open("settings.json") as settings:
+        data = json.load(settings)
+        return data["login"]

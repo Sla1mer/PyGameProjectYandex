@@ -9,7 +9,7 @@ import pyautogui
 from play_sound import play_sound, change_volume, game_volume
 from button_class import Button
 from draw_text import draw_text
-from Settings import get_screen_mode
+from Settings import get_screen_mode, get_login
 from disable_button_auth import get_is_login
 
 # не используемые импорты не трогать они работают на самом деле!!!!!
@@ -90,7 +90,10 @@ class InputBox:
 
 # Создаю кнопки и поля ввода, все расчеты делал на глаз так чтобы выглядело красиво
 box_size = screen_size[0] // 4, screen_size[1] // 16
-login = InputBox(screen_size[0] - screen_size[0] // 3, screen_size[1] - box_size[1] * 5 - box_size[1] // 2, box_size)
+
+login = InputBox(screen_size[0] - screen_size[0] // 3, screen_size[1] - box_size[1] * 5 - box_size[1] // 2,
+                 box_size, text=get_login())
+
 password = InputBox(screen_size[0] - screen_size[0] // 3, screen_size[1] - box_size[1] * 4, box_size)
 input_boxes = [login, password]
 button_size = screen_size[0] // 7.2, screen_size[1] // 9
@@ -131,6 +134,11 @@ all_buttons.add(Button(width - 60, 10, "webbrowser.open('https://github.com/Sla1
 bg = pygame.transform.scale(load_image('background.jpg'), (width, height))
 
 
+def is_play_or_is_deck(button):
+    return (button.update() == "open_chest(screen, screen_size)"
+            or button.update() == "play(screen, screen_size)")
+
+
 # Функция, которая возращает True or False, в зависимости, правильная ли кнопка нажата или нет
 def disable_button(button):
     return (button.update() == "autho(login.give_text(), password.give_text())" or
@@ -162,6 +170,12 @@ def main_menu():
                         # при нажатии на кнопку проигрываю звук, создаю партикл и ивалю ее функцию
                         play_sound('button_click.wav')
                         create_particles(pygame.mouse.get_pos())
+                        if is_play_or_is_deck(button):
+                            if get_is_login():
+                                eval(button.update())
+                            else:
+                                continue
+
                         eval(button.update())
 
             # Если список полей ввода не пустой, то рисуем их
