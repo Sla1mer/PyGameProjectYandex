@@ -3,12 +3,13 @@ import sys
 from Settings import get_volume
 from draw_text import draw_text
 from load_img import load_image
+
 pygame.init()
 sc = pygame.display.set_mode((1820, 900))
 
-pygame.mixer.music.load('sound/start_music.mp3')
-pygame.mixer.music.play()
-pygame.mixer.music.set_volume(get_volume())
+# pygame.mixer.music.load('sound/start_music.mp3')
+# pygame.mixer.music.play()
+# pygame.mixer.music.set_volume(get_volume())
 first_scene_1 = '''Я проснулся от ужасающего звука с улицы, во мне закралась небольшая тревога. '''
 first_scene_2 = '''Выглянул в окно, я вижу страшное: на улице всё горит, какие-то железные махины уничтожают город.'''
 first_scene_3 = '''От увиденного я начал падать в обморок.....'''
@@ -69,11 +70,6 @@ way_15 = '''АХХАХАХАХАХАХАХААХХААХАХАХАХ - прод�
 way_16 = '''Нам пришлось согласиться с его требованиями.....'''
 way_17 = '''*А что было дальше, вы узнаете во второй часте нашей игры - Кардмастер: наследие.'''
 way_18 = '''А пока предлагаю насладиться нашей непревосходной карточной игрой!*'''
-
-
-
-
-
 
 
 def story(screen, screen_size):
@@ -145,7 +141,7 @@ def story(screen, screen_size):
     to_read = {}
     for id, (text, bg) in enumerate(order_of_events.items()):
         print(text)
-        bg = pygame.transform.scale(load_image(bg), (screen_size[0], screen_size[1]))
+        bg = pygame.transform.scale(load_image(bg, flag=True), (screen_size[0], screen_size[1]))
         to_read[id] = (text, bg)
 
     while running:
@@ -167,15 +163,10 @@ def story(screen, screen_size):
             running = False
         try:
             screen.blit(to_read[k][1], (0, 0))
-            draw_text(to_read[k][0], screen_size[0] // 60, (255, 255, 255), screen, screen_size[0] * 0.01, screen_size[1] - screen_size[1] * 0.2)
+            draw_text(to_read[k][0], screen_size[0] // 60, (255, 255, 255), screen, screen_size[0] * 0.01,
+                      screen_size[1] - screen_size[1] * 0.2)
         except KeyError:
             pass
 
-
-
         pygame.display.flip()
     mainClock.tick(60)
-
-
-
-story(sc, (1920, 720))

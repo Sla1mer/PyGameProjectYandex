@@ -25,6 +25,7 @@ import os
 from test_settings import options
 import webbrowser
 from finish_screen import terminate
+from story import story
 
 width, height = pyautogui.size()
 # Инициализация игрового поля
@@ -110,6 +111,9 @@ menu_button_pos_y = screen_size[1] // 9
 
 all_buttons.add(Button(menu_button_pos_x, menu_button_pos_y * 2,
                        "play(screen, screen_size, False)", 'button_start_game.png', button_size))
+
+all_buttons.add(Button(menu_button_pos_x * 3.3, menu_button_pos_y * 2,
+                       "story(screen, screen_size)", 'story_mode_button.png', button_size))
 
 all_buttons.add(Button(menu_button_pos_x, menu_button_pos_y * 3,
                        "open_chest(screen, screen_size)", 'button_change_deck.png', button_size))
