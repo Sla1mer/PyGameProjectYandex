@@ -109,7 +109,7 @@ menu_button_pos_x = screen_size[0] // 14.4
 menu_button_pos_y = screen_size[1] // 9
 
 all_buttons.add(Button(menu_button_pos_x, menu_button_pos_y * 2,
-                       "play(screen, screen_size)", 'button_start_game.png', button_size))
+                       "play(screen, screen_size, False)", 'button_start_game.png', button_size))
 
 all_buttons.add(Button(menu_button_pos_x, menu_button_pos_y * 3,
                        "open_chest(screen, screen_size)", 'button_change_deck.png', button_size))

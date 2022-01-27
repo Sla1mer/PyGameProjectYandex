@@ -27,7 +27,8 @@ width, height = pyautogui.size()
 screen_size = (width, height)
 clock = pygame.time.Clock()
 pygame.init()
-pygame.display.set_caption('Крутая карточная игра')
+pygame.display.set_caption('Кардмастер')
+results = ["", "Что бы продолжить, нажмите любую кнопку"]
 flag = False
 
 if platform.system() == 'Windows':  # Windows
@@ -144,12 +145,15 @@ class GameProcess:
         if self.player_hearts == 0:
             print('победил противник')
             flag = True
-            write_result_to_db("Проигрышь")
+            write_result_to_db("lose")
+            results.insert(0, f"Ты проиграл со счётом {2 - self.bot_hearts}:2")
+
             # сюда результат игры
         elif self.bot_hearts == 0:
             print('ты победил')
-            write_result_to_db("Победа")
+            write_result_to_db("win")
             flag = True
+            results.insert(0, f"Ты победил со счётом {2 - self.bot_hearts}:{2 - self.player_hearts}")
             # сюда результат игры
 
         # очистка доски от карт
@@ -915,7 +919,8 @@ game = GameProcess()
 timer_to_place = 0
 
 
-def play(screen, screen_size):
+
+def play(screen, screen_size, _flag):
     # создадим группу, содержащую все спрайты
     global decks
     decks = pygame.sprite.Group()
@@ -937,6 +942,12 @@ def play(screen, screen_size):
     buttons = pygame.sprite.Group()
     global white_blocks
     white_blocks = pygame.sprite.Group()
+
+    global flag
+    flag = _flag
+
+    global results
+    results = ["", "Что бы продолжить, нажмите любую кнопку"]
 
     Deck(decks, 0)
     Deck(decks, 1)
@@ -989,6 +1000,7 @@ def play(screen, screen_size):
     game = GameProcess()
 
     running = True
+
     card_taked = False
     while running:
         clock.tick(fps)
@@ -996,6 +1008,7 @@ def play(screen, screen_size):
         balls_stat.update()
         for event in pygame.event.get():
             if flag and (game.get_health_player() == 0 or game.get_health_bot() == 0):
+
                 if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                     # Для Андрея
                     print("Хп бота", game.get_health_bot())
@@ -1006,6 +1019,7 @@ def play(screen, screen_size):
                 running = False
                 pyautogui.click(pygame.mouse.get_pos())
                 pyautogui.click(pygame.mouse.get_pos())
+
 
             if event.type == pygame.QUIT:
                 running = False
@@ -1027,6 +1041,22 @@ def play(screen, screen_size):
         my_part.draw(screen)
         players_stats_sprites.draw(screen)
         balls_stat.draw(screen)
+
+        if flag:
+            font_size = 55
+            font = pygame.font.Font('our_font.otf', font_size)
+            for elem in results:
+                text = font.render(elem, False, (255, 255, 255))
+                if "Ты" in elem:
+                    screen.blit(text, (screen_size[0] * 0.3, screen_size[1] * 0.35))
+                else:
+                    font_size = 30
+                    font = pygame.font.Font('our_font.otf', font_size)
+                    text = font.render(elem, False, (255, 255, 255))
+                    screen.blit(text, (screen_size[0] * 0.31, screen_size[1] * 0.5))
+
+
+
         for i in balls_stat:
             temp = i.draw_text()
             screen.blit(temp[0], temp[1])

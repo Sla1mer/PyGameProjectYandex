@@ -1,3 +1,5 @@
+import sys
+
 from Settings import get_login
 import sqlite3 as sq
 import pygame
