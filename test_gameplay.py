@@ -244,14 +244,56 @@ class Bot:
             game.process_pass_enemy()
 
         elif enemy_score < your_score:
+            choose_tactic = random.randint(0, 3)
+            print(choose_tactic)
+            # 0 - набирает рандомные карты # 1 - набирает мало сильных карт
+            # 2 - сильную карту и слабые # 3 - слабую и сильные
             if enemy_score + all_bot_power > your_score:
-                temp_power = 0
                 cards_to_place = []
-                for card in self.cards:
-                    temp_power += cards_ids[card][2]
-                    cards_to_place.append(card)
-                    if enemy_score + temp_power > your_score:
-                        break
+                if choose_tactic == 0:  # 0 - набирает рандомные карты
+                    temp_power = 0
+                    for card in self.cards:
+                        temp_power += cards_ids[card][2]
+                        cards_to_place.append(card)
+                        if enemy_score + temp_power > your_score:
+                            break
+
+                elif choose_tactic == 1:  # 1 - набирает мало сильных карт
+                    temp_power = 0
+                    cards_with_power = sorted([(x, cards_ids[x][2]) for x in self.cards], key=lambda x: x[1])
+                    cards_with_power.reverse()
+                    for card in cards_with_power:
+                        temp_power += card[1]
+                        cards_to_place.append(card[0])
+                        if enemy_score + temp_power > your_score:
+                            break
+
+                elif choose_tactic == 2:  # 2 - сильную карту и слабые
+                    temp_power = 0
+                    middle_value = all_bot_power // len(self.cards)
+                    cards_with_power = sorted([(x, cards_ids[x][2]) for x in self.cards], key=lambda x: x[1])
+                    temp_power += cards_with_power[-1][1]
+                    cards_to_place.append(cards_with_power[-1][0])
+                    cards_with_power.remove(cards_with_power[-1])
+                    for card in cards_with_power:
+                        if enemy_score + temp_power > your_score:
+                            break
+                        temp_power += card[1]
+                        cards_to_place.append(card[0])
+
+                elif choose_tactic == 3:  # 3 - слабую и сильные
+                    temp_power = 0
+                    cards_with_power = sorted([(x, cards_ids[x][2]) for x in self.cards], key=lambda x: x[1])
+                    temp_power += cards_with_power[0][1]
+                    cards_to_place.append(cards_with_power[0][0])
+                    cards_with_power.remove(cards_with_power[0])
+                    cards_with_power.reverse()
+                    for card in cards_with_power:
+                        if enemy_score + temp_power > your_score:
+                            break
+                        temp_power += card[1]
+                        cards_to_place.append(card[0])
+
                 self.cards_to_place = cards_to_place
                 timer_to_place = time.time()
             else:
@@ -421,7 +463,7 @@ class Card(pygame.sprite.Sprite):
         if self.rect.centerx == self.to_pos[0] and self.rect.centery == self.to_pos[1]:
             game.placing_card = False
             global timer_to_place
-            if game.bot_wants_place_card and int(time.time() - timer_to_place) >= 1:
+            if game.bot_wants_place_card and int(time.time() - timer_to_place) >= 2:
                 game.bot_wants_place_card = False
                 bot.make_move()  # ход бота
 
@@ -461,7 +503,7 @@ class Card(pygame.sprite.Sprite):
                     self.rect.y += 20
                     self.update_to_pos()
             else:
-                if self.took and not game.player_passed:
+                if self.took and not game.bot_wants_place_card and not game.player_passed:
                     part = list(filter(lambda x: x.get_part_type(args[0]) is not None, [part for part in all_parts]))
                     if part:
                         past = list(filter(lambda x: x.get_part_type(args[0]) is not None, [part for part in all_parts]))
