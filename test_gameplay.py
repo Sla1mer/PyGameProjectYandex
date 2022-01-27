@@ -144,8 +144,9 @@ class GameProcess:
         white_blocks = pygame.sprite.Group()
 
     def process_pass_enemy(self):
+        if not self.bot_passed:
+            WhiteBlock(white_blocks, 0)
         self.bot_passed = True
-        WhiteBlock(white_blocks, 0)
         if self.player_passed:
             self.round_ended = True
             global timer_to_place
@@ -241,6 +242,7 @@ class Bot:
         global timer_to_place
         if enemy_score > your_score:
             game.process_pass_enemy()
+
         elif enemy_score < your_score:
             if enemy_score + all_bot_power > your_score:
                 temp_power = 0
@@ -254,11 +256,20 @@ class Bot:
                 timer_to_place = time.time()
             else:
                 game.process_pass_enemy()
+
         elif enemy_score == your_score:
-            temp_power = 0
-            cards_to_place = [random.choice(self.cards)]
-            self.cards_to_place = cards_to_place
-            timer_to_place = time.time()
+            if enemy_score + all_bot_power > your_score:
+                temp_power = 20
+                target_card = 0
+                for card in self.cards:
+                    if cards_ids[card][2] < temp_power:
+                        target_card = card
+                        temp_power = cards_ids[card][2]
+                cards_to_place = [target_card]
+                self.cards_to_place = cards_to_place
+                timer_to_place = time.time()
+            else:
+                game.process_pass_enemy()
 
     def update(self):
         if self.cards_to_place:
