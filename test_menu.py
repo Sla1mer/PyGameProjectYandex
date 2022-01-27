@@ -1,4 +1,5 @@
 import datetime
+import sqlite3
 
 from animation_test import open_chest
 from load_img import load_image
@@ -180,7 +181,18 @@ def main_menu():
                         create_particles(pygame.mouse.get_pos())
                         if is_play_or_is_deck(button):
                             if get_is_login():
-                                eval(button.update())
+                                if button.update() == "play(screen, screen_size)":
+                                    with sqlite3.connect('users.db') as db:
+                                        cur = db.cursor()
+                                        query = '''SELECT deck FROM users WHERE login = ?'''
+                                        cur.execute(query, (get_login(),))
+
+                                        if cur.fetchone()[0] != None:
+                                            eval(button.update())
+                                        else:
+                                            continue
+                                else:
+                                    eval(button.update())
                             else:
                                 continue
 
