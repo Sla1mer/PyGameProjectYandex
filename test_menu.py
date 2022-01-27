@@ -1,3 +1,5 @@
+import datetime
+
 from animation_test import open_chest
 from load_img import load_image
 from test_gameplay import play
@@ -11,6 +13,7 @@ from button_class import Button
 from draw_text import draw_text
 from Settings import get_screen_mode, get_login
 from disable_button_auth import get_is_login
+from player_stats import get_statistic
 
 # не используемые импорты не трогать они работают на самом деле!!!!!
 from open_doc import open_documentation
@@ -117,7 +120,7 @@ all_buttons.add(Button(menu_button_pos_x, menu_button_pos_y * 5,
                        "options(screen_size, screen)", 'button_settings.png', button_size))
 
 all_buttons.add(Button(menu_button_pos_x, menu_button_pos_y * 6,
-                       "print('сделать')", 'button_stats.png', button_size))
+                       "get_statistic(screen, screen_size)", 'button_stats.png', button_size))
 
 all_buttons.add(Button(menu_button_pos_x, menu_button_pos_y * 7,
                        "terminate()", 'exit.png', button_size))
@@ -140,7 +143,8 @@ bg = pygame.transform.scale(load_image('background.jpg'), (width, height))
 
 def is_play_or_is_deck(button):
     return (button.update() == "open_chest(screen, screen_size)"
-            or button.update() == "play(screen, screen_size)")
+            or button.update() == "play(screen, screen_size)"
+            or button.update() == "get_statistic(screen, screen_size)")
 
 
 # Функция, которая возращает True or False, в зависимости, правильная ли кнопка нажата или нет

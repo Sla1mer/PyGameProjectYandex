@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import math
 
 import os, platform
@@ -6,6 +7,8 @@ import random
 import sqlite3
 import sys
 import time
+
+from pygame import surface
 
 from dict_cards_id import cards_ids
 from Settings import get_screen_mode
@@ -16,7 +19,6 @@ from play_sound import play_sound, change_volume, game_volume
 # from bot import Bot
 from Settings import get_login
 
-
 # Изображение не получится загрузить
 # без предварительной инициализации pygame
 
@@ -26,15 +28,18 @@ screen_size = (width, height)
 clock = pygame.time.Clock()
 pygame.init()
 pygame.display.set_caption('Крутая карточная игра')
+flag = False
 
 if platform.system() == 'Windows':  # Windows
     from win32api import GetMonitorInfo, MonitorFromPoint
+
     monitor_info = GetMonitorInfo(MonitorFromPoint((0, 0)))
     monitor_area = monitor_info.get("Monitor")
     work_area = monitor_info.get("Work")
 
     if get_screen_mode():
-        screen = pygame.display.set_mode((screen_size[0], screen_size[1] - (monitor_area[3] - work_area[3])), pygame.FULLSCREEN)
+        screen = pygame.display.set_mode((screen_size[0], screen_size[1] - (monitor_area[3] - work_area[3])),
+                                         pygame.FULLSCREEN)
     else:
         screen = pygame.display.set_mode((screen_size[0], screen_size[1] - (monitor_area[3] - work_area[3])))
 else:
@@ -48,15 +53,26 @@ parts_dict = {0: 'Твоя линия осадных карт', 1: 'Твоя л�
 another_parts_dict = {0: 5, 1: 4, 2: 3}
 x_for_parts_coords, y_for_parts_coords = int(screen_size[0] / 3.5), screen_size[1] // 10
 some_to_plus = int(screen_size[1] // 10 // 5)
-parts_coord = {0: (x_for_parts_coords, y_for_parts_coords), 1: (x_for_parts_coords, y_for_parts_coords * 2 + some_to_plus),
-               2: (x_for_parts_coords, y_for_parts_coords * 3 + some_to_plus * 2), 3: (x_for_parts_coords, y_for_parts_coords * 4 + some_to_plus * 3),
-               4: (x_for_parts_coords, y_for_parts_coords  * 5 + some_to_plus * 4), 5: (x_for_parts_coords, y_for_parts_coords * 6 + some_to_plus * 5)}
+parts_coord = {0: (x_for_parts_coords, y_for_parts_coords),
+               1: (x_for_parts_coords, y_for_parts_coords * 2 + some_to_plus),
+               2: (x_for_parts_coords, y_for_parts_coords * 3 + some_to_plus * 2),
+               3: (x_for_parts_coords, y_for_parts_coords * 4 + some_to_plus * 3),
+               4: (x_for_parts_coords, y_for_parts_coords * 5 + some_to_plus * 4),
+               5: (x_for_parts_coords, y_for_parts_coords * 6 + some_to_plus * 5)}
 board_lines_path_data = {0: ("board//line_siege.png", "board//line_siege_selected.png"),
                          1: ("board//line_distant.png", "board//line_distant_selected.png"),
                          2: ("board//line_swords2.png", "board//line_swords_selected.png"),
                          5: ("board//line_siege.png", "board//line_siege_selected.png"),
                          4: ("board//line_distant.png", "board//line_distant_selected.png"),
                          3: ("board//line_swords2.png", "board//line_swords_selected.png")}
+
+
+def write_result_to_db(result):
+    with sqlite3.connect('users.db') as db:
+        cur = db.cursor()
+        date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        query = f"INSERT INTO all_user_games (result, date, login) VALUES ('{result}', '{date}', '{get_login()}')"
+        cur.execute(query)
 
 
 class GameProcess:
@@ -68,6 +84,15 @@ class GameProcess:
         self.placing_card = True
         self.bot_wants_place_card = False
         self.round_ended = False
+
+    def get_ended_round(self):
+        return self.round_ended
+
+    def get_health_bot(self):
+        return self.bot_hearts
+
+    def get_health_player(self):
+        return self.player_hearts
 
     def take_health(self, player):
         all_hearts = [i.get_hearts() for i in hearts]
@@ -87,13 +112,15 @@ class GameProcess:
 
     def process_round(self):
         # вычисление проигравшего
-        enemy_ball = list(filter(lambda x: x.if_part_type(7) is not None, [ball for ball in balls_stat]))[0]  # противник
+        enemy_ball = list(filter(lambda x: x.if_part_type(7) is not None, [ball for ball in balls_stat]))[
+            0]  # противник
         your_ball = list(filter(lambda x: x.if_part_type(6) is not None, [ball for ball in balls_stat]))[0]  # ты
 
         if enemy_ball.score > your_ball.score:
             self.take_health(1)
             self.player_hearts -= 1
             # print('противник выйграл')
+
             # сюда результат раунда
 
         elif enemy_ball.score < your_ball.score:
@@ -110,13 +137,19 @@ class GameProcess:
             else:
                 self.player_hearts -= 1
             # print('ничья')
-
         # проверка на конец игры
+
+        global flag
+
         if self.player_hearts == 0:
             print('победил противник')
+            flag = True
+            write_result_to_db("Проигрышь")
             # сюда результат игры
         elif self.bot_hearts == 0:
             print('ты победил')
+            write_result_to_db("Победа")
+            flag = True
             # сюда результат игры
 
         # очистка доски от карт
@@ -234,7 +267,8 @@ class Bot:
         count_bot_cards = len(self.cards)
         count_my_cards = [part.get_count_cards() for part in my_part][0]
 
-        enemy_ball = list(filter(lambda x: x.if_part_type(7) is not None, [ball for ball in balls_stat]))[0]  # противник
+        enemy_ball = list(filter(lambda x: x.if_part_type(7) is not None, [ball for ball in balls_stat]))[
+            0]  # противник
         your_ball = list(filter(lambda x: x.if_part_type(6) is not None, [ball for ball in balls_stat]))[0]  # ты
         enemy_score = enemy_ball.score
         your_score = your_ball.score
@@ -506,7 +540,8 @@ class Card(pygame.sprite.Sprite):
                 if self.took and not game.bot_wants_place_card and not game.player_passed:
                     part = list(filter(lambda x: x.get_part_type(args[0]) is not None, [part for part in all_parts]))
                     if part:
-                        past = list(filter(lambda x: x.get_part_type(args[0]) is not None, [part for part in all_parts]))
+                        past = list(
+                            filter(lambda x: x.get_part_type(args[0]) is not None, [part for part in all_parts]))
                         part = part[0]
                         card_size_x, card_size_y = self.image.get_size()
                         len_cards_in_line = len(part.cards) * card_size_x
@@ -550,10 +585,12 @@ class Card(pygame.sprite.Sprite):
                         ball = list(filter(lambda x: x.if_part_type(self.line) is not None, [i for i in balls_stat]))[0]
                         ball.score += self.power
                         if 0 <= self.line <= 2:
-                            ball = list(filter(lambda x: x.if_part_type(7) is not None, [ball for ball in balls_stat]))[0]
+                            ball = list(filter(lambda x: x.if_part_type(7) is not None, [ball for ball in balls_stat]))[
+                                0]
                             ball.score += self.power
                         elif 3 <= self.line <= 5:
-                            ball = list(filter(lambda x: x.if_part_type(6) is not None, [ball for ball in balls_stat]))[0]
+                            ball = list(filter(lambda x: x.if_part_type(6) is not None, [ball for ball in balls_stat]))[
+                                0]
                             ball.score += self.power
                         game.bot_wants_place_card = True
                         global timer_to_place
@@ -815,26 +852,28 @@ class BallsCounters(pygame.sprite.Sprite):
             self.image = BallsCounters.image_ball_yellow
             self.image = pygame.transform.scale(self.image, (part.rect.height // 2, part.rect.height // 2))
             self.rect = self.image.get_rect()
-            self.rect.centerx, self.rect.centery = part.rect.topleft[0] - part.rect.topleft[0] // 27, part.rect.topleft[1] + part.rect.height // 2
+            self.rect.centerx, self.rect.centery = part.rect.topleft[0] - part.rect.topleft[0] // 27, part.rect.topleft[
+                1] + part.rect.height // 2
         elif 3 <= part_type <= 5:
             part = list(filter(lambda x: x.if_part_type(part_type) is not None, [i for i in all_parts]))[0]
             self.image = BallsCounters.image_ball_blue
             self.image = pygame.transform.scale(self.image, (part.rect.height // 2, part.rect.height // 2))
             self.rect = self.image.get_rect()
-            self.rect.centerx, self.rect.centery = part.rect.topleft[0] - part.rect.topleft[0] // 27, part.rect.topleft[1] + part.rect.height // 2
+            self.rect.centerx, self.rect.centery = part.rect.topleft[0] - part.rect.topleft[0] // 27, part.rect.topleft[
+                1] + part.rect.height // 2
         elif part_type == 7:
             stats_part = list(filter(lambda x: x.if_part_type(0) is not None, [i for i in players_stats_sprites]))[0]
             self.image = BallsCounters.image_ball_yellow
             self.image = pygame.transform.scale(self.image, (stats_part.rect.height // 2, stats_part.rect.height // 2))
             self.rect = self.image.get_rect()
-            self.rect.centerx, self.rect.centery = stats_part.rect.topright[0] - stats_part.rect.topright[0] // 27,\
+            self.rect.centerx, self.rect.centery = stats_part.rect.topright[0] - stats_part.rect.topright[0] // 27, \
                                                    stats_part.rect.topright[1] + stats_part.rect.height // 2
         elif part_type == 6:
             stats_part = list(filter(lambda x: x.if_part_type(1) is not None, [i for i in players_stats_sprites]))[0]
             self.image = BallsCounters.image_ball_blue
             self.image = pygame.transform.scale(self.image, (stats_part.rect.height // 2, stats_part.rect.height // 2))
             self.rect = self.image.get_rect()
-            self.rect.centerx, self.rect.centery = stats_part.rect.topright[0] - stats_part.rect.topright[0] // 27,\
+            self.rect.centerx, self.rect.centery = stats_part.rect.topright[0] - stats_part.rect.topright[0] // 27, \
                                                    stats_part.rect.topright[1] + stats_part.rect.height // 2
         self.score = 0
 
@@ -952,11 +991,22 @@ def play(screen, screen_size):
     running = True
     card_taked = False
     while running:
-
         clock.tick(fps)
         cards_group.update()
         balls_stat.update()
         for event in pygame.event.get():
+            if flag and (game.get_health_player() == 0 or game.get_health_bot() == 0):
+                if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                    # Для Андрея
+                    print("Хп бота", game.get_health_bot())
+                    print("Хп игрока", game.get_health_player())
+
+                    running = False
+            elif flag and (game.get_health_player() == 2 and game.get_health_bot() == 2):
+                running = False
+                pyautogui.click(pygame.mouse.get_pos())
+                pyautogui.click(pygame.mouse.get_pos())
+
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
