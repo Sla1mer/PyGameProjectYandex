@@ -255,6 +255,9 @@ class Bot:
     def make_move(self):
         if game.bot_passed:
             return
+        if len(self.cards) == 0:
+            game.process_pass_enemy()
+            return
         card_to_place = random.choice(self.cards)  # выбор карты
         self.cards.remove(card_to_place)
         part_to_place = cards_ids[card_to_place][-1]  # получение айди линии для карты
