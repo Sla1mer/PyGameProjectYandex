@@ -18,6 +18,7 @@ from particle_class import all_parcticles, create_particles
 from play_sound import play_sound, change_volume, game_volume
 # from bot import Bot
 from Settings import get_login
+from play_sound import get_volume
 
 # Изображение не получится загрузить
 # без предварительной инициализации pygame
@@ -30,6 +31,9 @@ pygame.init()
 pygame.display.set_caption('Кардмастер')
 results = ["", "Что бы продолжить, нажмите любую кнопку"]
 flag = False
+pygame.mixer.music.load('sound/start_music.mp3')
+pygame.mixer.music.play(loops=-1)
+pygame.mixer.music.set_volume(get_volume())
 
 if platform.system() == 'Windows':  # Windows
     from win32api import GetMonitorInfo, MonitorFromPoint
@@ -249,6 +253,10 @@ class Bot:
 
     def make_move(self):
         if game.bot_passed:
+            return
+
+        if len(self.cards) == 0:
+            game.process_pass_enemy()
             return
         card_to_place = random.choice(self.cards)  # выбор карты
         self.cards.remove(card_to_place)
@@ -919,7 +927,6 @@ game = GameProcess()
 timer_to_place = 0
 
 
-
 def play(screen, screen_size, _flag):
     # создадим группу, содержащую все спрайты
     global decks
@@ -1011,17 +1018,13 @@ def play(screen, screen_size, _flag):
 
                 if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                     # Для Андрея
-                    print("Хп бота", game.get_health_bot())
-                    print("Хп игрока", game.get_health_player())
-
                     running = False
-            elif flag and (game.get_health_player() == 2 and game.get_health_bot() == 2):
-                running = False
-                pyautogui.click(pygame.mouse.get_pos())
-                pyautogui.click(pygame.mouse.get_pos())
+                    return None
+
 
 
             if event.type == pygame.QUIT:
+                print("dsaldaslkdalsdklas")
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 cards_group.update(event.pos)
@@ -1054,8 +1057,6 @@ def play(screen, screen_size, _flag):
                     font = pygame.font.Font('our_font.otf', font_size)
                     text = font.render(elem, False, (255, 255, 255))
                     screen.blit(text, (screen_size[0] * 0.31, screen_size[1] * 0.5))
-
-
 
         for i in balls_stat:
             temp = i.draw_text()

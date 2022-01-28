@@ -15,6 +15,7 @@ from draw_text import draw_text
 from Settings import get_screen_mode, get_login
 from disable_button_auth import get_is_login
 from player_stats import get_statistic
+from play_sound import get_volume
 
 # не используемые импорты не трогать они работают на самом деле!!!!!
 from open_doc import open_documentation
@@ -33,6 +34,9 @@ screen_size = (width, height)
 mainClock = pygame.time.Clock()
 pygame.init()
 pygame.display.set_caption('Крутая карточная игра')
+pygame.mixer.music.load('sound/start_music.mp3')
+pygame.mixer.music.play(loops=-1)
+pygame.mixer.music.set_volume(get_volume())
 if platform.system() == 'Windows':  # Windows
     from win32api import GetMonitorInfo, MonitorFromPoint
 
@@ -148,7 +152,7 @@ bg = pygame.transform.scale(load_image('background.jpg'), (width, height))
 
 def is_play_or_is_deck(button):
     return (button.update() == "open_chest(screen, screen_size)"
-            or button.update() == "play(screen, screen_size)"
+            or button.update() == "play(screen, screen_size, False)"
             or button.update() == "get_statistic(screen, screen_size)")
 
 
@@ -185,7 +189,7 @@ def main_menu():
                         create_particles(pygame.mouse.get_pos())
                         if is_play_or_is_deck(button):
                             if get_is_login():
-                                if button.update() == "play(screen, screen_size)":
+                                if button.update() == "play(screen, screen_size, False)":
                                     with sqlite3.connect('users.db') as db:
                                         cur = db.cursor()
                                         query = '''SELECT deck FROM users WHERE login = ?'''
@@ -193,6 +197,7 @@ def main_menu():
 
                                         if cur.fetchone()[0] != None:
                                             eval(button.update())
+                                            continue
                                         else:
                                             continue
                                 else:

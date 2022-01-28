@@ -7,9 +7,9 @@ from load_img import load_image
 pygame.init()
 sc = pygame.display.set_mode((1820, 900))
 
-# pygame.mixer.music.load('sound/start_music.mp3')
-# pygame.mixer.music.play()
-# pygame.mixer.music.set_volume(get_volume())
+pygame.mixer.music.load('sound/start_music.mp3')
+pygame.mixer.music.play()
+pygame.mixer.music.set_volume(get_volume())
 first_scene_1 = '''Я проснулся от ужасающего звука с улицы, во мне закралась небольшая тревога. '''
 first_scene_2 = '''Выглянул в окно, я вижу страшное: на улице всё горит, какие-то железные махины уничтожают город.'''
 first_scene_3 = '''От увиденного я начал падать в обморок.....'''
@@ -157,8 +157,6 @@ def story(screen, screen_size):
                     k += 1
                 if event.button == 3:
                     k -= 1
-        if k == 7:
-            pygame.mixer.music.stop()
         if k == 59:
             running = False
         try:
