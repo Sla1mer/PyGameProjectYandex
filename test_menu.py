@@ -148,7 +148,7 @@ bg = pygame.transform.scale(load_image('background.jpg'), (width, height))
 
 def is_play_or_is_deck(button):
     return (button.update() == "open_chest(screen, screen_size)"
-            or button.update() == "play(screen, screen_size)"
+            or button.update() == "play(screen, screen_size, False)"
             or button.update() == "get_statistic(screen, screen_size)")
 
 
@@ -191,7 +191,7 @@ def main_menu():
                                         query = '''SELECT deck FROM users WHERE login = ?'''
                                         cur.execute(query, (get_login(),))
 
-                                        if cur.fetchone()[0] != None:
+                                        if cur.fetchone()[0] is not None:
                                             eval(button.update())
                                         else:
                                             continue
