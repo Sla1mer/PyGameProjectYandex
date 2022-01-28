@@ -33,10 +33,11 @@ width, height = pyautogui.size()
 screen_size = (width, height)
 mainClock = pygame.time.Clock()
 pygame.init()
-pygame.display.set_caption('Крутая карточная игра')
+pygame.display.set_caption('Кардмастер')
+
 pygame.mixer.music.load('sound/start_music.mp3')
 pygame.mixer.music.play(loops=-1)
-pygame.mixer.music.set_volume(get_volume())
+
 if platform.system() == 'Windows':  # Windows
     from win32api import GetMonitorInfo, MonitorFromPoint
 
@@ -169,6 +170,7 @@ delete_objects = []
 
 def main_menu():
     while True:
+        pygame.mixer.music.set_volume(get_volume())
         # выход из игры
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

@@ -91,10 +91,11 @@ def new_deck(size, screen_size):
 
 def write_new_deck():
     print(random_pick)
-    with sqlite3.connect('users.db') as db:
-        cur = db.cursor()
-        query = f"UPDATE users SET deck = ? WHERE login = '{get_login()}'"
-        cur.execute(query, (str(random_pick),))
+    if len(random_pick) == 10:
+        with sqlite3.connect('users.db') as db:
+            cur = db.cursor()
+            query = f"UPDATE users SET deck = ? WHERE login = '{get_login()}'"
+            cur.execute(query, (str(random_pick),))
 
 
 def open_chest(screen, screen_size):

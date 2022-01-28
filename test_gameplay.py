@@ -31,9 +31,9 @@ pygame.init()
 pygame.display.set_caption('Кардмастер')
 results = ["", "Что бы продолжить, нажмите любую кнопку"]
 flag = False
-pygame.mixer.music.load('sound/start_music.mp3')
-pygame.mixer.music.play(loops=-1)
-pygame.mixer.music.set_volume(get_volume())
+# pygame.mixer.music.load('sound/start_music.mp3')
+# pygame.mixer.music.play(loops=-1)
+# pygame.mixer.music.set_volume(get_volume())
 
 if platform.system() == 'Windows':  # Windows
     from win32api import GetMonitorInfo, MonitorFromPoint
