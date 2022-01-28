@@ -18,6 +18,7 @@ from particle_class import all_parcticles, create_particles
 from play_sound import play_sound, change_volume, game_volume
 # from bot import Bot
 from Settings import get_login
+from play_sound import get_volume
 
 # Изображение не получится загрузить
 # без предварительной инициализации pygame
@@ -30,6 +31,10 @@ pygame.init()
 pygame.display.set_caption('Кардмастер')
 results = ["", "Что бы продолжить, нажмите любую кнопку"]
 flag = False
+
+pygame.mixer.music.load('sound/start_music.mp3')
+pygame.mixer.music.play(loops=-1)
+pygame.mixer.music.set_volume(get_volume())
 
 if platform.system() == 'Windows':  # Windows
     from win32api import GetMonitorInfo, MonitorFromPoint
